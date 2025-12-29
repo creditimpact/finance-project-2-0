@@ -1,0 +1,64 @@
+not_mine:
+  - "I do not recognize this account and request full validation."
+  - "To the best of my knowledge, I have no association with this account. Please investigate."
+  - "This account appears unfamiliar. Kindly initiate a verification process."
+  - "I believe this may have been added in error, as I have no record of it."
+  - "I respectfully request a full investigation as I do not recall opening or using this account."
+  - "I dispute ownership of this account and ask for full documentation to support its inclusion."
+
+inaccurate_reporting:
+  - "The reported details appear to be inaccurate; please validate and correct as necessary."
+  - "I request an investigation into discrepancies I found in this account’s reporting."
+  - "There seem to be errors in how this account is reported. Please provide verification and correct if needed."
+  - "Certain elements of this account appear incorrect. Kindly investigate and provide supporting evidence."
+  - "The information provided conflicts with my records; I request validation and correction."
+
+identity_theft:
+  - "This account appears to result from identity theft; please block it under FCRA §605B."
+  - "I believe this account was opened without my authorization. Please take the necessary steps under FCRA §605B."
+  - "I am a victim of identity theft, and I request this item be blocked from my report accordingly."
+  - "This item is a result of fraudulent activity. Kindly investigate and remove it under the appropriate FCRA provisions."
+  - "Please treat this item as identity theft and block it in compliance with federal regulations."
+
+inconsistency_across_bureaus:
+  - "I have noted discrepancies across credit bureaus and request correction."
+  - "This account appears differently on various credit reports. Please investigate and ensure consistency."
+  - "There is a mismatch in how this account is reported between bureaus. Kindly provide clarification or correction."
+  - "Due to inconsistencies across reporting agencies, I request a full review of this item."
+  - "I ask that you address this discrepancy between bureaus and ensure accurate, synchronized reporting."
+
+account_closed:
+  - "This account has been closed and should not be reported as active."
+  - "Please update this account to reflect its closed status, as it is no longer open."
+  - "The account was closed and reporting it as active may be misleading. Kindly correct the status."
+  - "This is a closed account, but it appears as open. Please investigate and fix the record."
+
+stale_information:
+  - "The information reported is outdated and no longer reflects the current status of the account."
+  - "This item appears to be obsolete. I request that it be reviewed for accuracy and removed if necessary."
+  - "Please confirm whether this information still meets reporting guidelines for timeliness under the FCRA."
+  - "This data may exceed the allowable reporting timeframe. I request a reassessment."
+
+partial_correction:
+  - "Some aspects of this item were updated, but other discrepancies remain. Please conduct a full review."
+  - "I appreciate the changes made, but errors still exist. Kindly re-verify and correct the remaining issues."
+  - "This account was partially addressed, but additional corrections are required."
+  - "The update did not resolve the full issue. Please continue investigating this matter."
+
+billing_error:
+  - "I believe this account reflects a billing error and request a thorough investigation."
+  - "There may be mistakes in how charges were applied to this account. Please verify the billing records."
+  - "I dispute the accuracy of this balance due to potential overcharges or incorrect fees."
+  - "The charges on this account do not align with my records. I request documentation to validate the amount."
+
+duplicate_entry:
+  - "This appears to be a duplicate listing of an existing account. Kindly investigate and remove one instance."
+  - "This item seems to have been reported more than once. Please correct the duplication."
+  - "There may be two entries for the same account. I respectfully request this be reviewed and corrected."
+  - "This duplicate record may affect my score unfairly. Please investigate and resolve the issue."
+
+unauthorized_hard_inquiry:
+  - "I did not authorize this hard inquiry and request it be removed from my credit report."
+  - "This inquiry was not initiated by me. Please provide documentation or remove it accordingly."
+  - "I dispute the legitimacy of this inquiry and request further validation."
+  - "To my knowledge, I did not apply for credit with this entity. Please remove this inquiry."

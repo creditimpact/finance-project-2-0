@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "puraifi://schemas/stage_2_5_schema.json",
+  "title": "Stage 2.5 Normalized Account Summary",
+  "description": "Deterministic, compliance-safe summary and rulebook tags produced by Stage 2.5 per account.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "legal_safe_summary",
+    "suggested_dispute_frame",
+    "action_tag",
+    "rule_hits",
+    "needs_evidence",
+    "red_flags",
+    "prohibited_admission_detected",
+    "rulebook_version",
+    "precedence_version"
+  ],
+  "properties": {
+    "legal_safe_summary": {
+      "type": "string",
+      "description": "Neutral, verification-oriented rewrite of the client's statement with zero admissions.",
+      "minLength": 0,
+      "maxLength": 1000,
+      "default": ""
+    },
+    "suggested_dispute_frame": {
+      "type": "string",
+      "description": "High-level frame for the strategist; determined by deterministic rule hits.",
+      "enum": [
+        "",
+        "fraud",
+        "debt_validation",
+        "mov_request",
+        "obsolescence",
+        "bureau_dispute",
+        "direct_dispute",
+        "inquiry_dispute",
+        "verification",
+        "goodwill",
+        "settlement",
+        "paydown_first",
+        "cease_and_desist"
+      ],
+      "default": ""
+    },
+    "action_tag": {
+      "type": "string",
+      "description": "First surviving action tag after applying precedence/exclusions.",
+      "enum": [
+        "",
+        "fraud_dispute",
+        "debt_validation",
+        "mov",
+        "obsolescence",
+        "bureau_dispute",
+        "direct_dispute",
+        "inquiry_dispute",
+        "medical_dispute",
+        "paydown_first",
+        "goodwill",
+        "pay_for_delete",
+        "cease_and_desist"
+      ],
+        "default": ""
+      },
+      "rule_hits": {
+      "type": "array",
+      "description": "List of rule IDs that matched for this account.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "E_IDENTITY",
+          "E_IDENTITY_NEEDS_AFFIDAVIT",
+          "D_VALIDATION",
+          "C_MOV",
+          "H_OBSOL",
+          "A_CRA_DISPUTE",
+          "B_DIRECT_DISPUTE",
+          "L_DUPLICATE_TRADELINE",
+          "M_UNAUTHORIZED_INQUIRY",
+          "J_MEDICAL",
+          "K_UTILIZATION_PAYDOWN",
+          "F_GOODWILL",
+          "G_PFD",
+          "I_CEASE"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "needs_evidence": {
+      "type": "array",
+      "description": "Evidence artifacts requested by matching rules.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "identity_theft_affidavit",
+          "police_report",
+          "proof_of_payment",
+          "billing_statement",
+          "mov_request",
+          "furnisher_address",
+          "dofd_proof",
+          "bankruptcy_records",
+          "id_masked",
+          "other"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "red_flags": {
+      "type": "array",
+      "description": "Risk indicators (primarily admissions) detected in the user's wording.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "admission_of_fault",
+          "admission_of_debt",
+          "admission_of_ownership",
+          "admission_of_authorization",
+          "promise_to_pay",
+          "settlement_commitment",
+          "admission_generic",
+          "admission_context",
+          "late_payment"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "prohibited_admission_detected": {
+      "type": "boolean",
+      "description": "True if Stage 2.5 detected any admission (deterministic or AI-assist).",
+      "default": false
+    },
+    "rulebook_version": {
+      "type": "string",
+      "description": "Semantic version of backend/policy/rulebook.yaml used during evaluation.",
+      "default": ""
+    },
+    "precedence_version": {
+      "type": "string",
+      "description": "Version of rule precedence helper used during evaluation.",
+      "default": ""
+    }
+  },
+  "examples": [
+    {
+      "legal_safe_summary": "Creditor reports late payment; client requests verification of the reporting.",
+      "suggested_dispute_frame": "verification",
+      "rule_hits": ["K_UTILIZATION_PAYDOWN"],
+      "needs_evidence": [],
+      "red_flags": ["admission_of_fault"],
+      "prohibited_admission_detected": true,
+      "rulebook_version": "1.1.0",
+      "precedence_version": "1"
+    },
+    {
+      "legal_safe_summary": "Client reports identity theft and requests verification.",
+      "suggested_dispute_frame": "fraud",
+      "rule_hits": ["E_IDENTITY", "E_IDENTITY_NEEDS_AFFIDAVIT"],
+      "needs_evidence": ["identity_theft_affidavit"],
+      "red_flags": [],
+      "prohibited_admission_detected": false,
+      "rulebook_version": "1.1.0",
+      "precedence_version": "1"
+    },
+    {
+      "legal_safe_summary": "No statement provided.",
+      "suggested_dispute_frame": "",
+      "rule_hits": [],
+      "needs_evidence": [],
+      "red_flags": [],
+      "prohibited_admission_detected": false,
+      "rulebook_version": "1.1.0",
+      "precedence_version": "1"
+    }
+  ]
+}

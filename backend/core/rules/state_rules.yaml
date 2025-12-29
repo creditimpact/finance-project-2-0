@@ -1,0 +1,42 @@
+CA:
+  requires:
+    - "license_number"
+  disclosures:
+    - "Under the California Credit Services Act, we are required to provide this disclosure."
+  prohibit:
+    - "prepaid_fees"
+  insert_clauses:
+    - "This correspondence complies with the California Credit Services Act."
+  notes: "CA requires license disclosure and prohibits prepayment."
+
+NY:
+  clauses:
+    medical:
+      reference: "New York Financial Services Law § 3029"
+      text: "please confirm whether this account qualifies for removal under New York’s medical debt reporting restrictions."
+      label: "NY Medical Debt Clause"
+  insert_clauses:
+    - "This letter includes a request in accordance with NY rules for medical debt suppression."
+  notes: "Medical debt cannot be reported for 180 days and must be removed if under $500."
+
+GA:
+  prohibit_service: true
+  notes: "Georgia law restricts most paid credit repair services. Ensure compliance or deny service."
+
+FL:
+  requires:
+    - "surety_bond_number"
+  disclosures:
+    - "This service complies with Florida Statutes Chapter 817.7005 regarding Credit Service Organizations."
+  insert_clauses:
+    - "We are a bonded credit services provider under Florida law."
+  prohibit:
+    - "upfront_fees"
+  notes: "Bonding required. No advance payments. Special disclosures must be provided."
+
+TX:
+  disclosures:
+    - "In accordance with Texas Finance Code Chapter 393, this letter serves as a required notice."
+  insert_clauses:
+    - "This dispute was sent under the rules outlined in Texas’s credit services law."
+  notes: "Requires disclosures, allows cancellation within 3 business days."

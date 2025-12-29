@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <style>
+        body { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-light bg-light mb-4">
+    <div class="container-fluid justify-content-between">
+        <span class="navbar-brand mb-0 h1">Admin Panel</span>
+        <a href="{{ url_for('admin.logout') }}" class="btn btn-outline-secondary btn-sm">Logout</a>
+    </div>
+</nav>
+    <div class="container">
+        <div class="row">
+        <div class="col-md-6 mb-4">
+            <h3>Client Sessions</h3>
+            {% if clients %}
+            <div class="mb-3">
+                <input type="text" id="clientSearch" class="form-control" placeholder="Search clients...">
+            </div>
+            <ul class="list-group" id="clientList">
+                {% for c in clients %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="client-name">{{ c }}</span>
+                    <a href="{{ url_for('admin.download_client', folder=c) }}" class="btn btn-sm btn-primary">Download</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="alert alert-info">No client sessions yet — all clear!</div>
+            {% endif %}
+        </div>
+        <div class="col-md-6 mb-4">
+            <h3>Analytics Data</h3>
+            {% if analytics %}
+            <ul class="list-group">
+                {% for f in analytics %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ f }}
+                    <a href="{{ url_for('admin.download_analytics', filename=f) }}" class="btn btn-sm btn-primary">Download</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="alert alert-info">No analytics files found.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const search = document.getElementById('clientSearch');
+    if (search) {
+        search.addEventListener('input', function () {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('#clientList li').forEach(function (li) {
+                const name = li.querySelector('.client-name').textContent.toLowerCase();
+                li.style.display = name.includes(term) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>

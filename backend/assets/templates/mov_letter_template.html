@@ -1,0 +1,10 @@
+{% extends "backend/assets/templates/base_letter_template.html" %}
+{% block body %}
+<p>{{ creditor_name }}</p>
+{% include "partials/account_ref.html" %}
+<p>I am requesting the method of verification used to validate this account.</p>
+{% if client_context_sentence %}<p>{{ client_context_sentence }}</p>{% endif %}
+<p>{{ legal_safe_summary }}</p>
+<p>{{ cra_last_result }}</p>
+<p>{{ days_since_cra_result }}</p>
+{% endblock %}

@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`debug panel shows meta and capped fields 1`] = `
+<details
+  class="debug-panel"
+  open=""
+>
+  <summary>
+    Debug
+  </summary>
+  <div
+    class="decision-meta"
+  >
+    <div>
+      source: 
+      ai
+    </div>
+    <div>
+      tier: 
+      Tier1
+    </div>
+    <div>
+      confidence: 
+      0.91
+    </div>
+  </div>
+  <div
+    class="fields-used"
+  >
+    <div>
+      fields_used:
+    </div>
+    <ul>
+      <li>
+        f1
+      </li>
+      <li>
+        f2
+      </li>
+    </ul>
+  </div>
+  <pre
+    class="debug-json"
+  >
+    {
+  "result": "ok"
+}
+  </pre>
+</details>
+`;

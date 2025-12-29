@@ -1,0 +1,26 @@
+{
+  "title": "Outcome",
+  "schemaVersion": 38,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Outcome Mix",
+      "targets": [
+        {"expr": "sum(rate(outcome_verified[5m]))", "legendFormat": "Verified"},
+        {"expr": "sum(rate(outcome_updated[5m]))", "legendFormat": "Updated"},
+        {"expr": "sum(rate(outcome_deleted[5m]))", "legendFormat": "Deleted"},
+        {"expr": "sum(rate(outcome_nochange[5m]))", "legendFormat": "NoChange"}
+      ]
+    },
+    {
+      "type": "heatmap",
+      "title": "Ingest Latency",
+      "targets": [
+        {
+          "expr": "sum(rate(outcome_ingest_latency_ms_bucket[5m])) by (le)"
+        }
+      ]
+    }
+  ]
+}

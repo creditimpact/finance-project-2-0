@@ -1,0 +1,38 @@
+{% for category, accounts in accounts_summary.items() %}
+<div class="category {{ category }}">
+  <h2 class="category-title">{{ category|title }} Accounts</h2>
+  {% if accounts %}
+  <table class="account-table">
+    <tr><th>Account Name</th><th>Bureaus</th><th>Status</th><th>Action</th></tr>
+    {% for acc in accounts %}
+    <tr>
+      <td>{{ acc.name }}</td>
+      <td>{{ acc.bureaus|join(', ') }}</td>
+      <td>{{ acc.status or 'N/A' }}</td>
+      <td>
+        {% if acc.late_payments %}
+          <em>Late history -
+          {% for bureau, vals in acc.late_payments.items() %}
+            {{ bureau }}:
+            {% for k,v in vals.items() if v %}{{ k }}:{{ v }} {% endfor %}
+            {% if not loop.last %}; {% endif %}
+          {% endfor %}
+          </em><br>
+        {% endif %}
+        {% if acc.recommended_action %}<strong>Strategist Action:</strong> {{ acc.recommended_action }}<br>{% endif %}
+        {% if acc.needs_evidence %}<strong>Evidence Needed:</strong> {{ acc.needs_evidence|join(', ') }}<br>{% endif %}
+        {% if acc.letters %}<strong>Letters Generated:</strong> {{ acc.letters|join(', ') }}<br>{% endif %}
+        {% if acc.dispute_type == 'identity_theft' %}This account is reported as identity theft.<br>{% elif acc.dispute_type == 'unauthorized_or_unverified' %}This account doesn't look familiar and is being disputed.<br>{% elif acc.dispute_type == 'inaccurate_reporting' %}The information on this account appears incorrect.<br>{% endif %}
+        {% if acc.utilization %}{% set percent = acc.utilization|replace('%','')|int %}{% if percent > 30 %}You're using about {{ percent }}% of your limit. Paying this down will help your score.<br>{% endif %}{% endif %}
+        {% if acc.advisor_comment %}<em>{{ acc.advisor_comment }}</em><br>{% endif %}
+        {% if acc.personal_note %}<em>{{ acc.personal_note }}</em><br>{% endif %}
+        <strong>Your Action:</strong> {{ acc.action_sentence }}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>None</p>
+  {% endif %}
+</div>
+{% endfor %}

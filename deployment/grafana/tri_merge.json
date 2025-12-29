@@ -1,0 +1,36 @@
+{
+  "title": "Tri-Merge",
+  "schemaVersion": 38,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Families Processed",
+      "targets": [
+        {
+          "expr": "sum by (bureau) (rate(tri_merge_families_total[5m]))",
+          "legendFormat": "{{bureau}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Mismatches",
+      "targets": [
+        {
+          "expr": "sum by (bureau) (rate(tri_merge_mismatches_total[5m]))",
+          "legendFormat": "{{bureau}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Match Confidence p95",
+      "targets": [
+        {
+          "expr": "tri_merge_match_confidence_p95"
+        }
+      ]
+    }
+  ]
+}

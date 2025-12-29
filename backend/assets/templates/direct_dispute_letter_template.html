@@ -1,0 +1,8 @@
+{% extends "backend/assets/templates/base_letter_template.html" %}
+{% block body %}
+<p>{{ creditor_name }}</p>
+{% include "partials/account_ref.html" %}
+{% if client_context_sentence %}<p>{{ client_context_sentence }}</p>{% endif %}
+<p>{{ legal_safe_summary }}</p>
+<p>{{ furnisher_address }}</p>
+{% endblock %}

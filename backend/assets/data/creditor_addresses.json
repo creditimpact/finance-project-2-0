@@ -1,0 +1,202 @@
+[
+  {
+    "name": "American Express",
+    "address": "P.O. Box 981535, El Paso, TX 79998-1535"
+  },
+  {
+    "name": "Capital One",
+    "address": "P.O. Box 30285, Salt Lake City, UT 84130-0285"
+  },
+  {
+    "name": "Chase Bank",
+    "address": "P.O. Box 15298, Wilmington, DE 19850"
+  },
+  {
+    "name": "Citibank",
+    "address": "P.O. Box 6500, Sioux Falls, SD 57117"
+  },
+  {
+    "name": "Discover",
+    "address": "P.O. Box 30943, Salt Lake City, UT 84130"
+  },
+  {
+    "name": "Bank of America",
+    "address": "P.O. Box 982234, El Paso, TX 79998"
+  },
+  {
+    "name": "Wells Fargo",
+    "address": "P.O. Box 10347, Des Moines, IA 50306"
+  },
+  {
+    "name": "Barclays",
+    "address": "P.O. Box 8801, Wilmington, DE 19899-8801"
+  },
+  {
+    "name": "Synchrony Bank",
+    "address": "P.O. Box 965024, Orlando, FL 32896-5024"
+  },
+  {
+    "name": "Comenity Bank",
+    "address": "P.O. Box 182273, Columbus, OH 43218-2273"
+  },
+  {
+    "name": "US Bank",
+    "address": "P.O. Box 790408, St. Louis, MO 63179-0408"
+  },
+  {
+    "name": "PNC Bank",
+    "address": "P.O. Box 3429, Pittsburgh, PA 15230-3429"
+  },
+  {
+    "name": "TD Bank",
+    "address": "P.O. Box 84037, Columbus, GA 31908-4037"
+  },
+  {
+    "name": "Fifth Third Bank",
+    "address": "P.O. Box 630778, Cincinnati, OH 45263-0778"
+  },
+  {
+    "name": "BB&T (now Truist)",
+    "address": "P.O. Box 580048, Charlotte, NC 28258"
+  },
+  {
+    "name": "SunTrust (now Truist)",
+    "address": "P.O. Box 85092, Richmond, VA 23286"
+  },
+  {
+    "name": "OneMain Financial",
+    "address": "P.O. Box 3251, Evansville, IN 47731-3251"
+  },
+  {
+    "name": "LendingClub",
+    "address": "595 Market St., Suite 200, San Francisco, CA 94105"
+  },
+  {
+    "name": "Avant",
+    "address": "P.O. Box 9183380, Chicago, IL 60691"
+  },
+  {
+    "name": "Upgrade",
+    "address": "275 Battery Street, 23rd Floor, San Francisco, CA 94111"
+  },
+  {
+    "name": "PayPal Credit (Synchrony)",
+    "address": "P.O. Box 960080, Orlando, FL 32896"
+  },
+  {
+    "name": "Marcus by Goldman Sachs",
+    "address": "P.O. Box 45400, Salt Lake City, UT 84145"
+  },
+  {
+    "name": "SoFi",
+    "address": "234 1st Street, San Francisco, CA 94105"
+  },
+  {
+    "name": "Earnest",
+    "address": "535 Mission St., Suite 1663, San Francisco, CA 94105"
+  },
+  {
+    "name": "Upstart",
+    "address": "2950 S. Delaware Street, Suite 300, San Mateo, CA 94403"
+  },
+  {
+    "name": "FreedomPlus",
+    "address": "1875 S. Grant St., Suite 450, San Mateo, CA 94402"
+  },
+  {
+    "name": "Credit One Bank",
+    "address": "P.O. Box 98873, Las Vegas, NV 89193-8873"
+  },
+  {
+    "name": "First Premier Bank",
+    "address": "P.O. Box 5524, Sioux Falls, SD 57117-5524"
+  },
+  {
+    "name": "Mission Lane",
+    "address": "P.O. Box 105286, Atlanta, GA 30348-5286"
+  },
+  {
+    "name": "Ollo Card",
+    "address": "P.O. Box 9222, Old Bethpage, NY 11804"
+  },
+  {
+    "name": "Reflex Card",
+    "address": "P.O. Box 3220, Buffalo, NY 14240"
+  },
+  {
+    "name": "Indigo Card",
+    "address": "P.O. Box 23039, Columbus, GA 31902-3039"
+  },
+  {
+    "name": "Merrick Bank",
+    "address": "P.O. Box 9201, Old Bethpage, NY 11804-9001"
+  },
+  {
+    "name": "HSBC",
+    "address": "P.O. Box 9, Buffalo, NY 14240"
+  },
+  {
+    "name": "Regions Bank",
+    "address": "P.O. Box 105289, Atlanta, GA 30348-5289"
+  },
+  {
+    "name": "Santander Bank",
+    "address": "P.O. Box 847003, Boston, MA 02284-7003"
+  },
+  {
+    "name": "BBVA USA",
+    "address": "P.O. Box 2210, Decatur, AL 35699"
+  },
+  {
+    "name": "Ally Bank",
+    "address": "P.O. Box 380901, Bloomington, MN 55438"
+  },
+  {
+    "name": "Toyota Financial",
+    "address": "P.O. Box 9786, Cedar Rapids, IA 52409"
+  },
+  {
+    "name": "Nissan Motor Acceptance Corp.",
+    "address": "P.O. Box 660366, Dallas, TX 75266-0366"
+  },
+  {
+    "name": "Ford Credit",
+    "address": "P.O. Box 650575, Dallas, TX 75265-0575"
+  },
+  {
+    "name": "Honda Financial Services",
+    "address": "P.O. Box 168088, Irving, TX 75016-8088"
+  },
+  {
+    "name": "Hyundai Motor Finance",
+    "address": "P.O. Box 20829, Fountain Valley, CA 92728"
+  },
+  {
+    "name": "Kia Motors Finance",
+    "address": "P.O. Box 20829, Fountain Valley, CA 92728"
+  },
+  {
+    "name": "Tesla Finance",
+    "address": "3500 Deer Creek Rd, Palo Alto, CA 94304"
+  },
+  {
+    "name": "Navient",
+    "address": "P.O. Box 9655, Wilkes-Barre, PA 18773-9655"
+  },
+  {
+    "name": "Great Lakes (Nelnet)",
+    "address": "P.O. Box 7860, Madison, WI 53707"
+  },
+  {
+    "name": "AES (American Education Services)",
+    "address": "P.O. Box 2461, Harrisburg, PA 17105-2461"
+  },
+  {
+    "name": "MOHELA",
+    "address": "P.O. Box 1022, Chesterfield, MO 63006-1022"
+  },
+  {
+    "name": "FedLoan Servicing",
+    "address": "P.O. Box 69184, Harrisburg, PA 17106-9184"
+  }
+]

@@ -1,0 +1,7 @@
+# Metrics backend retention configuration
+# Debug metrics are kept shorter to limit storage usage.
+retention:
+  - pattern: "*_debug"
+    days: 7
+  - pattern: "*"
+    days: 30

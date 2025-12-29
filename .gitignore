@@ -1,0 +1,102 @@
+# קבצים זמניים של פייתון
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# קבצים בינאריים / קומפילציה
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+*.out
+
+# קבצים שקשורים למערכות הפעלה
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# קבצי לוג או טמפ
+*.log
+*.tmp
+temp/
+logs/
+output/
+*.bak
+nohup.out
+
+# קבצים רגישים או מקומיים
+.env
+.env.*
+!frontend/.env
+!frontend/.env.*
+*.sqlite3
+*.db
+config.py  # אם הוא מכיל סודות – השארת רק גרסת example
+
+# קבצים שנוצרים על ידי הפרויקט שלך
+client_report.pdf
+instructions.pdf
+Start_Here - Instructions.pdf
+*.zip
+*.pdf  # כל PDF שנוצר אוטומטית
+
+# ספריות עזר/חיצוניות
+venv/
+env/
+ENV/
+node_modules/
+
+# npm cache
+npm-cache/
+**/npm-cache/
+
+# דוחות או נתונים שהוזנו
+uploads/
+data/raw/
+Clients/
+analytics_data/
+
+# קבצים שקשורים ל־IDE / עריכת קוד
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# קבצי גיבוי
+*.bak
+*~
+
+# Pytest & Testing Artifacts
+.pytest_cache/
+.artifacts/
+.coverage
+coverage.xml
+
+# Type Checking / Linting Cache
+.mypy_cache/
+.ruff_cache/
+
+# Additional ignores
+client_output/
+**/__pycache__/
+.venv/
+*.pyc
+*.pyo
+**/*.pdf
+data/sessions.json
+data/intake_only.json
+archive/examples/**
+.env
+frontend/.env
+*.env.local
+
+.env
+*.env.local
+frontend/.env
+
+
+.env
+

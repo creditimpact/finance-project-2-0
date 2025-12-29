@@ -1,0 +1,26 @@
+{
+  "title": "Planner",
+  "schemaVersion": 38,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Cycle Progression",
+      "targets": [
+        {
+          "expr": "sum by (step) (rate(planner_cycle_progress[5m]))",
+          "legendFormat": "step {{step}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "SLA Violations",
+      "targets": [
+        {
+          "expr": "sum(rate(planner_sla_violations_total[5m]))"
+        }
+      ]
+    }
+  ]
+}

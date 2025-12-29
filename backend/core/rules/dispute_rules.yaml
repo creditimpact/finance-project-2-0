@@ -1,0 +1,62 @@
+# rules/dispute_rules.yaml
+
+- id: RULE_NO_ADMISSION
+  severity: critical
+  description: Never admit fault or debt ownership
+  block_patterns:
+    - "\\bI admit\\b"
+    - "\\bmy fault\\b"
+    - "\\bI promise to pay\\b"
+    - "\\bI forgot\\b"
+    - "\\bI was late\\b"
+    - "\\bit was my account\\b"
+    - "\\bI paid it late\\b"
+    - "\\bI made a mistake\\b"
+    - "\\bI missed a payment\\b"
+    - "\\bI take responsibility\\b"
+  fix_template: "I dispute the accuracy of this information and request validation under applicable law."
+
+- id: RULE_PII_LIMIT
+  severity: critical
+  description: Mask PII; allow only name, address, DOB, last 4 SSN
+  block_patterns:
+    - "\\b\\d{3}-\\d{2}-\\d{4}\\b"   # Full SSN
+    - "\\b\\d{9}\\b"                 # Compact SSN
+    - "\\b\\d{5,}\\b"                # Any long digit sequence (could be account #s)
+    - "\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b"  # Emails
+    - "\\+?\\d{1,3}[\\s.-]?\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4}" # Phone numbers
+
+- id: RULE_NEUTRAL_LANGUAGE
+  severity: warning
+  description: Maintain neutral and professional tone. Avoid charged or emotional language.
+  block_patterns:
+    - "\\bcrooks\\b"
+    - "\\bscam\\w*\\b"
+    - "\\bfraudster\\b"
+    - "\\bthis is ridiculous\\b"
+    - "\\byou're stealing\\b"
+    - "\\bdisgusting\\b"
+  fix_template: "I believe there may be an error. Please investigate and correct if necessary."
+
+- id: RULE_WORD_LIMIT
+  severity: warning
+  description: Letters should be concise and no longer than 1 page
+  check_type: word_count
+  max_words: 300
+  fix_template: "Please revise and summarize the explanation in a concise manner."
+
+- id: RULE_CONFLICT_WITH_DOCUMENTS
+  severity: warning
+  description: Statements in the letter conflict with uploaded documentation.
+  block_patterns:
+    - "\\bthis account is not mine\\b"
+    - "\\bnever opened this\\b"
+    - "\\bI closed this account\\b"
+  note: "This rule triggers if documents show otherwise; system should prioritize documentation over free-text."
+
+- id: RULE_DISPUTE_TYPE_REQUIRED
+  severity: critical
+  description: Each explanation must specify or infer a valid dispute type
+  required_fields:
+    - dispute_type
+  fix_template: "Please specify whether the issue is identity theft, inaccuracy, or another recognized dispute type."

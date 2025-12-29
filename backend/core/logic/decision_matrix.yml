@@ -1,0 +1,147 @@
+matrix:
+  account_number_display:
+    C1: neutral_context_only
+    C2: neutral_context_only
+    C3: neutral_context_only
+    C4: neutral_context_only
+    C5: neutral_context_only
+
+  account_rating:
+    C1: supportive_needs_companion
+    C2: neutral_context_only
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  account_status:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  account_type:
+    C1: neutral_context_only
+    C2: neutral_context_only
+    C3: supportive_needs_companion
+    C4: supportive_needs_companion
+    C5: supportive_needs_companion
+
+  balance_owed:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  closed_date:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  credit_limit:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  creditor_type:
+    C1: neutral_context_only
+    C2: neutral_context_only
+    C3: supportive_needs_companion
+    C4: supportive_needs_companion
+    C5: supportive_needs_companion
+
+  date_of_last_activity:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  date_opened:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  date_reported:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  high_balance:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  last_payment:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  last_verified:
+    C1: supportive_needs_companion
+    C2: neutral_context_only
+    C3: supportive_needs_companion
+    C4: supportive_needs_companion
+    C5: supportive_needs_companion
+
+  past_due_amount:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  payment_amount:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  payment_frequency:
+    C1: supportive_needs_companion
+    C2: neutral_context_only
+    C3: supportive_needs_companion
+    C4: supportive_needs_companion
+    C5: supportive_needs_companion
+
+  payment_status:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  seven_year_history:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable
+
+  term_length:
+    C1: supportive_needs_companion
+    C2: neutral_context_only
+    C3: supportive_needs_companion
+    C4: supportive_needs_companion
+    C5: supportive_needs_companion
+
+  two_year_payment_history:
+    C1: supportive_needs_companion
+    C2: supportive_needs_companion
+    C3: strong_actionable
+    C4: strong_actionable
+    C5: strong_actionable

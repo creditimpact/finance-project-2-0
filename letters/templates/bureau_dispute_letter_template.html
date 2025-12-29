@@ -1,0 +1,8 @@
+<html>
+  <body>
+    <p>{{ creditor_name }}</p>
+    <p>Account {{ account_number_masked }}{% if bureau %} ({{ bureau|upper }}){% endif %}</p>
+    <p>I dispute the accuracy of this account under FCRA §611 and request a reinvestigation.</p>
+    <p>{{ legal_safe_summary }}</p>
+  </body>
+</html>

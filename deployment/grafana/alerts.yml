@@ -1,0 +1,33 @@
+groups:
+  - name: planner
+    rules:
+      - alert: PlannerSLAViolations
+        expr: increase(planner_sla_violations_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Planner SLA violation"
+          description: "Planner SLA violations detected over 5m."
+
+  - name: outcome
+    rules:
+      - alert: OutcomeIngestLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(outcome_ingest_latency_ms_bucket[5m])) by (le)) > 300000
+        for: 15m
+        labels:
+          severity: page
+        annotations:
+          summary: "Outcome ingest latency high"
+          description: "p95 ingest latency over 5m for 15m."
+
+  - name: tri_merge
+    rules:
+      - alert: TriMergeMismatchSpike
+        expr: rate(tri_merge_mismatches_total[5m]) > 2 * rate(tri_merge_mismatches_total[1h])
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Tri-merge mismatches spiking"
+          description: "Mismatch rate over 2x 1h baseline."

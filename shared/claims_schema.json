@@ -1,0 +1,43 @@
+{
+  "autoAttachBase": ["gov_id", "proof_of_address"],
+  "byIssue": [
+    {
+      "issue": "collection",
+      "claims": [
+        {"key": "not_mine", "title": "Not mine / Identity theft", "requires": ["ftc_id_theft_report"], "optional": ["police_report"]},
+        {"key": "paid_in_full", "title": "Paid in full", "requires": ["proof_of_payment", "paid_in_full_letter"]},
+        {"key": "settled", "title": "Settled", "requires": ["settlement_letter", "proof_of_payment"]},
+        {"key": "closed_but_open", "title": "Closed but reported open", "requires": ["billing_statement"]},
+        {"key": "authorized_user", "title": "Authorized user only", "requires": []},
+        {"key": "included_in_bankruptcy", "title": "Included in bankruptcy", "requires": ["bankruptcy_docket", "bankruptcy_discharge"]},
+        {"key": "insurance_paid", "title": "Insurance paid (medical)", "requires": ["insurance_eob", "medical_provider_letter"]},
+        {"key": "repo_cured", "title": "Repo/Foreclosure cured", "requires": ["repossession_release"]},
+        {"key": "judgment_satisfied", "title": "Judgment satisfied/vacated", "requires": ["judgment_vacated"]},
+        {"key": "student_loan_rehab", "title": "Student loan rehab/consolidation", "requires": ["student_loan_rehab"]},
+        {"key": "wrong_dofd", "title": "Wrong DOFD / re-aging", "requires": ["billing_statement"]},
+        {"key": "paid_by_employer", "title": "Paid by employer/3rd party", "requires": ["employer_letter", "proof_of_payment"]},
+        {"key": "mixed_file", "title": "Mixed file / info mismatch", "requires": [], "optional": [], "autoAttach": ["gov_id", "proof_of_address"]}
+      ]
+    },
+    {
+      "issue": "delinquency",
+      "claims": [
+        {"key": "never_late_bank_error", "title": "Never late / bank error", "requires": ["bank_statement", "billing_statement"], "optional": ["auto_pay_proof"]},
+        {"key": "goodwill", "title": "Goodwill adjustment (hardship period)", "requires": ["goodwill_support"]},
+        {"key": "wrong_late_code", "title": "Incorrect late code/date", "requires": ["billing_statement", "bank_statement"]},
+        {"key": "servicer_transfer_glitch", "title": "Servicer transfer glitch", "requires": ["servicer_transfer_letter"]},
+        {"key": "not_mine", "title": "Not mine / Identity theft", "requires": ["ftc_id_theft_report"], "optional": ["police_report"]},
+        {"key": "closed_but_open", "title": "Closed but reported open", "requires": ["billing_statement"]},
+        {"key": "wrong_dofd", "title": "Wrong DOFD / re-aging", "requires": ["billing_statement"]},
+        {"key": "mixed_file", "title": "Mixed file / info mismatch", "requires": [], "autoAttach": ["gov_id", "proof_of_address"]}
+      ]
+    },
+    {
+      "issue": "generic",
+      "claims": [
+        {"key": "mixed_file", "title": "Mixed file / info mismatch", "requires": [], "autoAttach": ["gov_id", "proof_of_address"]},
+        {"key": "explanation_only", "title": "Explain the issue", "requires": [], "description": "Use the explanation box to describe the problem."}
+      ]
+    }
+  ]
+}

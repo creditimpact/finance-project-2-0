@@ -1,0 +1,22 @@
+{
+  "tier1": {
+    "bankruptcy": ["bankruptcy"],
+    "foreclosure": ["foreclosure"],
+    "judgment": ["judgment"],
+    "tax_lien": ["tax lien", "tax-lien"],
+    "charge_off": ["charge off", "charge-off", "charged off", "chargeoff"],
+    "collection": ["collection", "placed for collection", "collections"]
+  },
+  "tier2": {
+    "serious_delinquency": [
+      "60 days past due",
+      "90 days past due",
+      "120 days past due",
+      "120+ days",
+      "derogatory"
+    ]
+  },
+  "tier3": {
+    "potential_derogatory": ["derogatory", "collection", "charge-off"]
+  }
+}

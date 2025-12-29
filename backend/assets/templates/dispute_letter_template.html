@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dispute Letter - {{ bureau_name }}</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 50px;
+            color: #000;
+        }
+
+        h1 {
+            font-size: 16pt;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .account-block {
+            background: #f0f7ff;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #2e5b9c;
+        }
+
+        .inquiry-block {
+            background: #fefefe;
+            padding: 10px;
+            border-left: 3px solid #888;
+            margin-bottom: 10px;
+        }
+
+        .id-theft-warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 5px solid #d39e00;
+            margin-top: 30px;
+        }
+
+        .signature {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px dashed #aaa;
+        }
+
+        .legal-footer {
+            font-size: 10pt;
+            margin-top: 30px;
+            color: #333;
+        }
+        ul {
+            margin: 5px 0 15px 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="section">
+    <p><strong>{{ client_name }}</strong>{% for line in client_address_lines %}<br>{{ line }}{% endfor %}{% if not client_address_lines %}<br>__________________________{% endif %}</p>
+    <p>{{ date }}</p>
+    <p><strong>To:</strong> {{ bureau_name }}<br>{{ bureau_address }}</p>
+</div>
+
+<div class="section">
+    <p>To whom it may concern,</p>
+    <p>{{ opening_paragraph }}</p>
+    {% if client_context_sentence %}<p>{{ client_context_sentence }}</p>{% endif %}
+</div>
+
+{% if accounts %}
+<div class="section">
+    <h1>Disputed Accounts</h1>
+    {% for acc in accounts %}
+        <div class="account-block">
+            <strong>Account:</strong> {{ acc.name }}<br>
+            <strong>Account #:</strong> {{ acc.account_number }}<br>
+            <strong>Reported Status:</strong> {{ acc.status }}<br>
+            {% if acc.paragraph %}
+              <p>{{ acc.paragraph }}</p>
+            {% endif %}
+            {% if acc.requested_action %}
+              <p><strong>Requested Action:</strong> {{ acc.requested_action }}</p>
+            {% endif %}
+            {% if acc.personal_note %}
+              <p><em>Advisor Note:</em> {{ acc.personal_note }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if inquiries %}
+<div class="section">
+    <h1>Unauthorized Inquiries</h1>
+    {% for inquiry in inquiries %}
+        <div class="inquiry-block">
+            <strong>Creditor:</strong> {{ inquiry.creditor_name }}<br>
+            <strong>Date:</strong> {{ inquiry.date }}
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if is_identity_theft %}
+<div class="section id-theft-warning">
+    <h2>Identity Theft Notice</h2>
+    <p>This dispute includes items believed to be the result of identity theft.</p>
+    <p>Under the Fair Credit Reporting Act (FCRA), Section 605B, I am requesting the immediate removal of these fraudulent items from my credit file.</p>
+    <p>I have enclosed a copy of my government-issued ID and a report filed with the FTC at IdentityTheft.gov.</p>
+    <p>Please act accordingly and provide written confirmation within 30 days.</p>
+</div>
+{% endif %}
+
+<div class="section">
+    <p>{{ closing_paragraph }}</p>
+    <p>Please respond in writing within 30 days, as required by the Fair Credit Reporting Act (FCRA).</p>
+    <p>Thank you for your prompt attention to this matter.</p>
+    <p>
+        To assist with the verification process, I have included a copy of my government-issued photo ID and proof of address.
+        {% if is_identity_theft %} I have also included a copy of my Social Security card to support my identity theft claim.{% endif %}
+    </p>
+</div>
+
+<div class="signature">
+    <p>Sincerely,<br><strong>{{ client_name }}</strong></p>
+    <p style="margin-top: 40px;">__________________________<br>Signature</p>
+</div>
+
+<div class="legal-footer">
+    <p>According to the Fair Credit Reporting Act (FCRA), you are required to complete your investigation within 30 days of receipt of this letter and provide the results in writing. Please confirm all actions taken.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,407 @@
+version: "1.2.0"
+
+limits:
+  D_VALIDATION_WINDOW_DAYS: 30        # חלון אימות מול גובה־חוב (FDCPA 1692g)
+  MOV_WINDOW_DAYS: 15                  # חלון בקשת Method of Verification אחרי CRA=verified
+  UTILIZATION_HIGH: 0.90               # ניצול גבוה של מסגרת אשראי (90%)
+  GOODWILL_MIN_AGE_MONTHS: 6           # מינימום חודשים מאז האיחור האחרון כדי לשקול Goodwill
+  INQUIRY_AGE_MONTHS: 24               # חקירה ותיקה (למשל מעל 24 חודשים)
+  MEDICAL_SMALL_DOLLAR: 500            # סף "חוב רפואי קטן"
+
+flags:
+  NO_GOODWILL_ON_COLLECTIONS: true     # לא להציע Goodwill לחשבונות בקולקשנס
+  REQUIRE_ID_THEFT_EVIDENCE: true      # אם יש זהות גנובה—נדרש תצהיר/דו"ח
+  ENABLE_MEDICAL_POLICY: true          # להפעיל מדיניות רפואית (תחת/שולם)
+
+# Rule evaluation notes:
+# - Rules are processed according to `precedence` (highest first).
+# - A triggered rule may list rule IDs in `excludes` to suppress them.
+# - Among surviving rules, the highest `priority` determines the final `action_tag`.
+# סדר הפעלה (גבוה → נמוך)
+precedence:
+  - E_IDENTITY
+  - E_IDENTITY_NEEDS_AFFIDAVIT
+  - D_VALIDATION
+  - C_MOV
+  - H_OBSOL
+  - TM_PRESENCE
+  - TM_BALANCE
+  - TM_STATUS
+  - TM_DATES
+  - TM_REMARKS
+  - TM_UTILIZATION
+  - TM_PERSONAL_INFO
+  - TM_DUPLICATE
+  - A_CRA_DISPUTE
+  - B_DIRECT_DISPUTE
+  - L_DUPLICATE_TRADELINE
+  - M_UNAUTHORIZED_INQUIRY
+  - J_MEDICAL
+  - K_UTILIZATION_PAYDOWN
+  - F_GOODWILL
+  - G_PFD
+  - I_CEASE
+
+# חוקים שמבטלים/מדכאים אחרים (rule → [rules])
+exclusions:
+  E_IDENTITY: [
+    F_GOODWILL,
+    G_PFD,
+    D_VALIDATION,
+    A_CRA_DISPUTE,
+    B_DIRECT_DISPUTE,
+    H_OBSOL,
+    TM_PRESENCE,
+    TM_BALANCE,
+    TM_STATUS,
+    TM_DATES,
+    TM_REMARKS,
+    TM_UTILIZATION,
+    TM_PERSONAL_INFO,
+    TM_DUPLICATE,
+  ]
+  E_IDENTITY_NEEDS_AFFIDAVIT: []
+  D_VALIDATION: [A_CRA_DISPUTE, B_DIRECT_DISPUTE, G_PFD]
+  C_MOV: [G_PFD]
+  H_OBSOL: [G_PFD]
+  A_CRA_DISPUTE: [G_PFD]
+  B_DIRECT_DISPUTE: [G_PFD]
+  TM_PRESENCE: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_BALANCE: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_STATUS: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_DATES: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_REMARKS: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_UTILIZATION: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_PERSONAL_INFO: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+  TM_DUPLICATE: [A_CRA_DISPUTE, B_DIRECT_DISPUTE]
+
+rules:
+  # --- 1) Identity theft / Fraud flow ---
+  - id: E_IDENTITY
+    description: Identity theft or “not mine” → fraud flow and blocking under FCRA 605B.
+    when:
+      all:
+        - { field: "identity_theft", eq: true }
+    effect:
+      rule_hits: ["E_IDENTITY"]
+      suggested_dispute_frame: "fraud"
+      flags: ["fraud_flow"]
+      legal_notes: ["FCRA 605B"]
+      action_tag: fraud_dispute
+      priority: High
+
+  # 1b) דרישת תצהיר/דו"ח זהות גנובה כאשר חסר
+  - id: E_IDENTITY_NEEDS_AFFIDAVIT
+    description: When identity theft is claimed and affidavit/report is missing, request evidence.
+    when:
+      all:
+        - { field: "identity_theft", eq: true }
+        - { field: "has_id_theft_affidavit", eq: false }
+        - { field: "flags.REQUIRE_ID_THEFT_EVIDENCE", eq: true }
+    effect:
+      rule_hits: ["E_IDENTITY_NEEDS_AFFIDAVIT"]
+      suggested_dispute_frame: "fraud"
+      needs_evidence: ["identity_theft_affidavit"]
+      action_tag: fraud_dispute
+      priority: High
+
+  # --- 2) Collector 30-day validation window (FDCPA 1692g) ---
+  - id: D_VALIDATION
+    description: Within 30 days of first collector contact → send debt validation demand.
+    when:
+      all:
+        - { field: "type", eq: "collection" }
+        - { field: "days_since_first_contact", lte: "${limits.D_VALIDATION_WINDOW_DAYS}" }
+    effect:
+      rule_hits: ["D_VALIDATION"]
+      suggested_dispute_frame: "debt_validation"
+      legal_notes: ["FDCPA 1692g"]
+      action_tag: debt_validation
+      priority: High
+
+  # --- 3) MoV 15-day window אחרי CRA=verified ---
+  - id: C_MOV
+    description: After CRA returned “verified”, within 15 days request Method of Verification.
+    when:
+      all:
+        - { field: "cra_last_result", eq: "verified" }
+        - { field: "days_since_cra_result", lte: "${limits.MOV_WINDOW_DAYS}" }
+    effect:
+      rule_hits: ["C_MOV"]
+      suggested_dispute_frame: "mov_request"
+      legal_notes: ["FCRA 611(a)(6)-(7)"]
+      action_tag: mov
+      priority: High
+
+  # --- 4) Obsolescence (התיישנות דיווח) ---
+  - id: H_OBSOL
+    description: Report age exceeds FCRA limits (7 years DOFD, 10 years for bankruptcy).
+    when:
+      any:
+        - all:
+            - { field: "type", eq: "bankruptcy" }
+            - { field: "years_since_bankruptcy", gte: 10 }
+        - all:
+            - { field: "type", ne: "inquiry" }
+            - { field: "years_since_dofd", gte: 7 }
+    effect:
+      rule_hits: ["H_OBSOL"]
+      suggested_dispute_frame: "obsolescence"
+      legal_notes: ["FCRA 605"]
+      action_tag: obsolescence
+      priority: High
+
+  # --- 5) Tri-merge mismatches ---
+  # mismatch_type -> action_tag mapping for traceability:
+  #   presence       -> bureau_dispute
+  #   balance        -> mov
+  #   status         -> mov
+  #   dates          -> mov
+  #   remarks        -> bureau_dispute
+  #   utilization    -> mov
+  #   personal_info  -> personal_info_correction
+  #   duplicate      -> bureau_dispute
+  - id: TM_PRESENCE
+    description: Tradeline present on some bureaus but missing on others → dispute with bureau.
+    when:
+      all:
+        - { field: "tri_merge.presence", eq: true }
+    effect:
+      rule_hits: ["TM_PRESENCE"]
+      suggested_dispute_frame: "bureau_dispute"
+      action_tag: bureau_dispute
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.presence  # presence mismatch across bureaus
+      priority: High
+
+  - id: TM_BALANCE
+    description: Balances differ across bureaus → request Method of Verification.
+    when:
+      all:
+        - { field: "tri_merge.balance", eq: true }
+    effect:
+      rule_hits: ["TM_BALANCE"]
+      suggested_dispute_frame: "mov_request"
+      action_tag: mov
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.balance  # balance mismatch across bureaus
+      priority: High
+
+  - id: TM_STATUS
+    description: Account status inconsistent across bureaus → request Method of Verification.
+    when:
+      all:
+        - { field: "tri_merge.status", eq: true }
+    effect:
+      rule_hits: ["TM_STATUS"]
+      suggested_dispute_frame: "mov_request"
+      action_tag: mov
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.status  # status mismatch across bureaus
+      priority: High
+
+  - id: TM_DATES
+    description: Date information mismatched between bureaus → request Method of Verification.
+    when:
+      all:
+        - { field: "tri_merge.dates", eq: true }
+    effect:
+      rule_hits: ["TM_DATES"]
+      suggested_dispute_frame: "mov_request"
+      action_tag: mov
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.dates  # date mismatch across bureaus
+      priority: High
+
+  - id: TM_REMARKS
+    description: Remarks differ among bureaus → dispute with bureau for accuracy.
+    when:
+      all:
+        - { field: "tri_merge.remarks", eq: true }
+    effect:
+      rule_hits: ["TM_REMARKS"]
+      suggested_dispute_frame: "bureau_dispute"
+      action_tag: bureau_dispute
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.remarks  # remarks mismatch across bureaus
+      priority: High
+
+  - id: TM_UTILIZATION
+    description: Utilization reported inconsistently → request Method of Verification.
+    when:
+      all:
+        - { field: "tri_merge.utilization", eq: true }
+    effect:
+      rule_hits: ["TM_UTILIZATION"]
+      suggested_dispute_frame: "mov_request"
+      action_tag: mov
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.utilization  # utilization mismatch across bureaus
+      priority: High
+
+  - id: TM_PERSONAL_INFO
+    description: Personal information differs across bureaus → request correction.
+    when:
+      all:
+        - { field: "tri_merge.personal_info", eq: true }
+    effect:
+      rule_hits: ["TM_PERSONAL_INFO"]
+      suggested_dispute_frame: "personal_info_correction"
+      action_tag: personal_info_correction
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.personal_info  # personal info mismatch across bureaus
+      priority: High
+
+  - id: TM_DUPLICATE
+    description: Possible duplicate tradelines across bureaus.
+    when:
+      all:
+        - { field: "tri_merge.duplicate", eq: true }
+    effect:
+      rule_hits: ["TM_DUPLICATE"]
+      suggested_dispute_frame: "bureau_dispute"
+      action_tag: bureau_dispute
+      flags: ["duplicate_tradeline"]
+      needs_evidence: ["tri_merge_snapshot"]
+      source_mismatch: tri_merge.duplicate  # duplicate tradeline mismatch across bureaus
+      priority: High
+
+  # --- 6) Bureau dispute (אי־דיוק/מידע חסר/אי־יכולת אימות) ---
+  - id: A_CRA_DISPUTE
+    description: Dispute with CRA due to inaccuracy/incompleteness or inability to verify.
+    when:
+      any:
+        - { field: "is_inaccurate_or_incomplete", eq: true }
+        - { field: "not_able_to_verify", eq: true }
+    effect:
+      rule_hits: ["A_CRA_DISPUTE"]
+      suggested_dispute_frame: "bureau_dispute"
+      legal_notes: ["FCRA 611"]
+      action_tag: bureau_dispute
+      priority: High
+
+  # --- 7) Direct dispute (יש כתובת ישירה של furnisher) ---
+  - id: B_DIRECT_DISPUTE
+    description: Send direct dispute to furnisher when address is available and item is inaccurate/incomplete.
+    when:
+      all:
+        - { field: "is_inaccurate_or_incomplete", eq: true }
+        - { field: "has_direct_dispute_address", eq: true }
+    effect:
+      rule_hits: ["B_DIRECT_DISPUTE"]
+      suggested_dispute_frame: "direct_dispute"
+      legal_notes: ["FACTA/CFPB reasonable investigation"]
+      action_tag: direct_dispute
+      priority: High
+
+  # --- 8) Duplicate tradeline (לחסום כפילויות) ---
+  - id: L_DUPLICATE_TRADELINE
+    description: Duplicate tradelines should be deduped and disputed once.
+    when:
+      all:
+        - { field: "is_duplicate", eq: true }
+    effect:
+      rule_hits: ["L_DUPLICATE_TRADELINE"]
+      suggested_dispute_frame: "bureau_dispute"
+      flags: ["duplicate_tradeline"]
+      legal_notes: ["FCRA 611"]
+      action_tag: bureau_dispute
+      priority: Medium
+
+  # --- 9) Unauthorized / stale inquiry ---
+  - id: M_UNAUTHORIZED_INQUIRY
+    description: Old or unauthorized inquiries → dispute with CRA.
+    when:
+      all:
+        - { field: "type", eq: "inquiry" }
+        - any:
+            - { field: "unauthorized_inquiry", eq: true }
+            - { field: "inquiry_age_months", gte: "${limits.INQUIRY_AGE_MONTHS}" }
+    effect:
+      rule_hits: ["M_UNAUTHORIZED_INQUIRY"]
+      suggested_dispute_frame: "inquiry_dispute"
+      legal_notes: ["FCRA 611"]
+      action_tag: inquiry_dispute
+      priority: Medium
+
+  # --- 10) Medical policy (קטן/שולם) ---
+  - id: J_MEDICAL
+    description: Medical debts under threshold or already paid → apply medical policy.
+    when:
+      all:
+        - { field: "type", eq: "medical" }
+        - { field: "flags.ENABLE_MEDICAL_POLICY", eq: true }
+        - any:
+            - { field: "amount", lt: "${limits.MEDICAL_SMALL_DOLLAR}" }
+            - { field: "status", eq: "paid" }
+    effect:
+      rule_hits: ["J_MEDICAL"]
+      suggested_dispute_frame: "verification"
+      legal_notes: ["FCRA 611", "CRA medical policy"]
+      action_tag: medical_dispute
+      priority: Medium
+
+  # --- 11) High utilization on open revolving (לשלם לפני מחלוקת) ---
+  - id: K_UTILIZATION_PAYDOWN
+    description: Open revolving utilization ≥ threshold → pay down before disputing.
+    when:
+      all:
+        - { field: "is_open_revolving", eq: true }
+        - { field: "utilization", gte: "${limits.UTILIZATION_HIGH}" }
+    effect:
+      rule_hits: ["K_UTILIZATION_PAYDOWN"]
+      suggested_dispute_frame: "verification"
+      flags: ["paydown_first"]
+      action_tag: paydown_first
+      priority: Medium
+      excludes: ["F_GOODWILL"]
+
+  # --- 12) Goodwill (רק ל-late, היסטוריה טובה, לא collections כשflag פעיל) ---
+  - id: F_GOODWILL
+    description: Soft goodwill request for late payments with otherwise good history.
+    when:
+      all:
+        - { field: "type", eq: "late" }
+        - { field: "account_history_good", eq: true }
+        - { field: "months_since_last_late", gte: "${limits.GOODWILL_MIN_AGE_MONTHS}" }
+        - any:
+            - { field: "flags.NO_GOODWILL_ON_COLLECTIONS", eq: false }
+            - { field: "type", ne: "collection" }
+    effect:
+      rule_hits: ["F_GOODWILL"]
+      suggested_dispute_frame: "goodwill"
+      legal_notes: ["Voluntary"]
+      action_tag: goodwill
+      priority: Low
+
+  # --- 13) Pay-for-Delete (מוצא אחרון בקולקשנס כשאין עילות אחרות) ---
+  - id: G_PFD
+    description: Negotiated pay-for-delete only when no legal dispute frame applies.
+    when:
+      all:
+        - { field: "type", eq: "collection" }
+        - { field: "is_inaccurate_or_incomplete", ne: true }
+        - { field: "not_able_to_verify", ne: true }
+        - { field: "years_since_dofd", lt: 7 }
+        - { field: "identity_theft", ne: true }
+    effect:
+      rule_hits: ["G_PFD"]
+      suggested_dispute_frame: "settlement"
+      legal_notes: ["Voluntary"]
+      action_tag: pay_for_delete
+      priority: Low
+
+  # --- 14) Cease & Desist (תמיד אם ביקש) ---
+  - id: I_CEASE
+    description: If the customer asked to stop collection calls, send cease & desist.
+    when:
+      all:
+        - { field: "requests_cease_and_desist", eq: true }
+    effect:
+      rule_hits: ["I_CEASE"]
+      suggested_dispute_frame: "cease_and_desist"
+      legal_notes: ["FDCPA 1692c(c)"]
+      action_tag: cease_and_desist
+      priority: Low
+
+      

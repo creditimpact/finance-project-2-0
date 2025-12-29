@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "puraifi://schemas/strategy_schema.json",
+  "title": "Strategy Report",
+  "description": "Strategy report with Stage 2, Stage 2.5, and enforcement metadata for each account.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["overview", "accounts", "global_recommendations"],
+  "properties": {
+    "overview": {"type": "string", "default": ""},
+    "accounts": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "account_id",
+          "name",
+          "account_number",
+          "status",
+          "analysis",
+          "recommendation",
+          "alternative_options",
+          "flags",
+          "legal_safe_summary",
+          "suggested_dispute_frame",
+          "rule_hits",
+          "needs_evidence",
+          "red_flags",
+          "prohibited_admission_detected",
+          "rulebook_version",
+          "precedence_version",
+          "action_tag",
+          "priority",
+          "legal_notes",
+          "enforced_rules",
+          "policy_override_reason"
+        ],
+        "properties": {
+          "account_id": {"type": "string"},
+          "name": {"type": "string"},
+          "account_number": {"type": "string", "default": ""},
+          "status": {"type": "string", "default": ""},
+          "analysis": {"type": "string", "default": ""},
+          "recommendation": {"type": "string", "default": ""},
+          "alternative_options": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": []
+          },
+          "flags": {"type": "array", "items": {"type": "string"}, "default": []},
+          "legal_safe_summary": {"type": "string", "default": ""},
+          "suggested_dispute_frame": {"type": "string", "default": ""},
+          "rule_hits": {"type": "array", "items": {"type": "string"}, "default": []},
+          "needs_evidence": {"type": "array", "items": {"type": "string"}, "default": []},
+          "red_flags": {"type": "array", "items": {"type": "string"}, "default": []},
+          "prohibited_admission_detected": {"type": "boolean", "default": false},
+          "rulebook_version": {"type": "string", "default": ""},
+          "precedence_version": {"type": "string", "default": ""},
+          "action_tag": {
+            "type": "string",
+            "enum": ["", "dispute", "goodwill", "custom_letter", "ignore"],
+            "default": ""
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["", "High", "Medium", "Low"],
+            "default": ""
+          },
+          "legal_notes": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": []
+          },
+          "enforced_rules": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": []
+          },
+          "policy_override_reason": {"type": "string", "default": ""}
+        }
+      }
+    },
+    "global_recommendations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "default": []
+    }
+  }
+}

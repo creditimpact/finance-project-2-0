@@ -1,0 +1,202 @@
+{
+  "$schema": "https://example.com/seed-arguments.schema.json",
+  "version": 1,
+  "templates": {
+    "account_status": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Two bureaus report one status while the third reports another. Please reconcile and correct the outlier to reflect the accurate account status across all bureaus."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Two bureaus agree the account is <X>, while one shows <Y>. Please verify the source records and align the discrepant bureau."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "All three bureaus show different statuses for the same account. Please verify primary records and update to a single, accurate status."
+      }
+    },
+    "payment_status": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Two bureaus report one status while the third reports another. Please reconcile and correct the outlier to reflect the accurate payment status across all bureaus."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Two bureaus agree the payment status is <X>, while one shows <Y>. Please verify the source records and align the discrepant bureau."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "All three bureaus show different payment statuses for the same account. Please verify primary records and update to a single, accurate status."
+      }
+    },
+    "date_opened": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported open date is inconsistent. Please validate the original opening documentation and align all bureaus to the correct date."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported open date is inconsistent. Please validate the original opening documentation and align all bureaus to the correct date."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported open date is inconsistent. Please validate the original opening documentation and align all bureaus to the correct date."
+      }
+    },
+    "date_reported": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "The most recent reported date differs across bureaus. Please audit reporting logs and synchronize the reported date."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "The most recent reported date differs across bureaus. Please audit reporting logs and synchronize the reported date."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "The most recent reported date differs across bureaus. Please audit reporting logs and synchronize the reported date."
+      }
+    },
+    "date_of_last_activity": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Date of last activity conflicts across bureaus. Please confirm payment/transaction history and correct the DLA accordingly."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Date of last activity conflicts across bureaus. Please confirm payment/transaction history and correct the DLA accordingly."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Date of last activity conflicts across bureaus. Please confirm payment/transaction history and correct the DLA accordingly."
+      }
+    },
+    "last_payment": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Last payment date conflicts across bureaus. Please verify internal payment logs and statements, then correct the outlier."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Last payment date conflicts across bureaus. Please verify internal payment logs and statements, then correct the outlier."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Last payment date conflicts across bureaus. Please verify internal payment logs and statements, then correct the outlier."
+      }
+    },
+    "balance_owed": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      }
+    },
+    "past_due_amount": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      }
+    },
+    "high_balance": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      }
+    },
+    "credit_limit": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      }
+    },
+    "payment_amount": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Reported amount is inconsistent across bureaus. Please validate source statements and update the discrepant value(s)."
+      }
+    },
+    "closed_date": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Closure date differs across bureaus. Please confirm closure records and align all reporting."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Closure date differs across bureaus. Please confirm closure records and align all reporting."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Closure date differs across bureaus. Please confirm closure records and align all reporting."
+      }
+    },
+    "seven_year_history": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      }
+    },
+    "two_year_payment_history": {
+      "C3_TWO_PRESENT_CONFLICT": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      },
+      "C4_TWO_MATCH_ONE_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      },
+      "C5_ALL_DIFF": {
+        "tone": "firm_courteous",
+        "text": "Delinquency/payment history tokens do not match across bureaus. Please reconcile history records and correct the outliers."
+      }
+    }
+  }
+}

@@ -1,0 +1,161 @@
+fields:
+  balance_owed:
+    type: money
+    rules:
+      - if: "value > 0"
+        polarity: bad
+        severity: high
+      - if: "value == 0"
+        polarity: good
+        severity: medium
+
+  past_due_amount:
+    type: money
+    rules:
+      - if: "value > 0"
+        polarity: bad
+        severity: high
+      - if: "value == 0"
+        polarity: good
+        severity: medium
+
+  payment_status:
+    type: text
+    bad_keywords:
+      - id: PAYMENT_STATUS_COLLECTION
+        pattern: '(?i)\bcollection\b'
+      - id: PAYMENT_STATUS_CHARGEOFF
+        pattern: '(?i)charge[- ]?off|collection/chargeoff'
+      - id: PAYMENT_STATUS_REPOSSESSION
+        pattern: '(?i)repossession'
+      - id: PAYMENT_STATUS_LATE_120
+        pattern: '(?i)late\s*120'
+      - id: PAYMENT_STATUS_LATE_90
+        pattern: '(?i)late\s*90'
+    good_keywords:
+      - id: PAYMENT_STATUS_PAID_IN_FULL
+        pattern: '(?i)paid\s+in\s+full|\bPIF\b'
+      - id: PAYMENT_STATUS_PAID_AS_AGREED
+        pattern: '(?i)paid\s+as\s+agreed'
+      - id: PAYMENT_STATUS_CURRENT
+        pattern: '(?i)\bcurrent\b'
+      - id: PAYMENT_STATUS_NEVER_LATE
+        pattern: '(?i)never\s+late'
+    neutral_keywords:
+      - id: PAYMENT_STATUS_UNKNOWN
+        pattern: '(?i)unknown'
+      - id: PAYMENT_STATUS_PLACEHOLDER
+        pattern: '^\s*--\s*$'
+    default: unknown
+    weights:
+      bad: high
+      good: medium
+      neutral: low
+
+  account_status:
+    type: text
+    bad_keywords:
+      - id: ACCOUNT_STATUS_COLLECTION
+        pattern: '(?i)\bcollection\b'
+      - id: ACCOUNT_STATUS_CHARGEOFF
+        pattern: '(?i)charge[- ]?off'
+      - id: ACCOUNT_STATUS_REPOSSESSION
+        pattern: '(?i)repossession'
+    good_keywords:
+      - id: ACCOUNT_STATUS_CLOSED_PAID
+        pattern: '(?i)closed\s*-\s*paid'
+      - id: ACCOUNT_STATUS_PAID
+        pattern: '(?i)\bpaid\b'
+      - id: ACCOUNT_STATUS_CURRENT
+        pattern: '(?i)\bcurrent\b'
+    neutral_keywords:
+      - id: ACCOUNT_STATUS_OPEN
+        pattern: '(?i)\bopen\b'
+      - id: ACCOUNT_STATUS_CLOSED
+        pattern: '(?i)\bclosed\b'
+      - id: ACCOUNT_STATUS_PLACEHOLDER
+        pattern: '^\s*--\s*$'
+    default: unknown
+    weights: { bad: high, good: medium, neutral: low }
+
+  closed_date:
+    type: date
+    rules:
+      - if: "is_present == true"
+        polarity: good
+        severity: low
+      - if: "is_present == false"
+        polarity: neutral
+        severity: low
+
+  last_payment:
+    type: date
+    rules:
+      - if: "is_present == true"
+        polarity: good
+        severity: medium
+      - if: "is_present == false"
+        polarity: neutral
+        severity: low
+
+  creditor_remarks:
+    type: text
+    bad_keywords:
+      - id: CREDITOR_REMARKS_PLACED_FOR_COLLECTION
+        pattern: '(?i)placed\s+for\s+collection'
+      - id: CREDITOR_REMARKS_ASSIGNED_TO_ATTORNEY
+        pattern: '(?i)assigned\s+to\s+attorney'
+      - id: CREDITOR_REMARKS_INTERNAL_COLLECTIONS
+        pattern: '(?i)internal\s+collections'
+      - id: CREDITOR_REMARKS_CHARGED_OFF
+        pattern: '(?i)charged\s+off'
+    good_keywords:
+      - id: CREDITOR_REMARKS_DISPUTE_RESOLVED
+        pattern: '(?i)dispute\s+resolved\s*-\s*consumer\s+agrees'
+      - id: CREDITOR_REMARKS_PAID_SETTLED
+        pattern: '(?i)paid/settled'
+    neutral_keywords:
+      - id: CREDITOR_REMARKS_ACCOUNT_DISPUTED
+        pattern: '(?i)account\s+information\s+disputed'
+      - id: CREDITOR_REMARKS_PLACEHOLDER
+        pattern: '^\s*--\s*$'
+    default: neutral
+    weights: { bad: medium, good: low, neutral: low }
+
+  account_type:
+    type: text
+    bad_keywords:
+      - id: ACCOUNT_TYPE_COLLECTION
+        pattern: '(?i)\bcollection\b'
+    good_keywords:
+      - id: ACCOUNT_TYPE_INSTALLMENT
+        pattern: '(?i)installment'
+      - id: ACCOUNT_TYPE_REVOLVING
+        pattern: '(?i)revolving'
+      - id: ACCOUNT_TYPE_MORTGAGE
+        pattern: '(?i)mortgage'
+    neutral_keywords:
+      - id: ACCOUNT_TYPE_PLACEHOLDER
+        pattern: '^\s*--\s*$'
+    default: unknown
+    weights: { bad: medium, good: low, neutral: low }
+
+  creditor_type:
+    type: text
+    bad_keywords:
+      - id: CREDITOR_TYPE_COLLECTION_AGENCY
+        pattern: '(?i)collection\s+agencies'
+      - id: CREDITOR_TYPE_DEBT_BUYER
+        pattern: '(?i)debt\s+buyers'
+    good_keywords:
+      - id: CREDITOR_TYPE_BANK_CREDIT_CARDS
+        pattern: '(?i)bank\s+credit\s+cards'
+      - id: CREDITOR_TYPE_AUTO_FINANCING
+        pattern: '(?i)auto\s+financing'
+    neutral_keywords:
+      - id: CREDITOR_TYPE_ALL_BANKS
+        pattern: '(?i)all\s+banks'
+      - id: CREDITOR_TYPE_PLACEHOLDER
+        pattern: '^\s*--\s*$'
+    default: neutral
+    weights: { bad: medium, good: low, neutral: low }

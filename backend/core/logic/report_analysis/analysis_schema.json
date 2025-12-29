@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "personal_info_issues": {"type": "array", "default": []},
+    "negative_accounts": {"type": "array", "default": []},
+    "open_accounts_with_issues": {"type": "array", "default": []},
+    "positive_accounts": {"type": "array", "default": []},
+    "high_utilization_accounts": {"type": "array", "default": []},
+    "all_accounts": {"type": "array", "default": []},
+    "inquiries": {"type": "array", "default": []},
+    "account_inquiry_matches": {"type": "array", "default": []},
+    "summary_metrics": {
+      "type": "object",
+      "properties": {
+        "num_collections": {"type": "number", "default": 0},
+        "num_late_payments": {"type": "number", "default": 0},
+        "high_utilization": {"type": "boolean", "default": false},
+        "recent_inquiries": {"type": "number", "default": 0},
+        "total_inquiries": {"type": "number", "default": 0},
+        "num_negative_accounts": {"type": "number", "default": 0},
+        "num_accounts_over_90_util": {"type": "number", "default": 0},
+        "account_types_in_problem": {"type": "array", "default": []}
+      },
+      "required": [
+        "num_collections",
+        "num_late_payments",
+        "high_utilization",
+        "recent_inquiries",
+        "total_inquiries",
+        "num_negative_accounts",
+        "num_accounts_over_90_util",
+        "account_types_in_problem"
+      ],
+      "additionalProperties": true,
+      "default": {}
+    },
+    "strategic_recommendations": {"type": "array", "default": []}
+  },
+  "required": [
+    "personal_info_issues",
+    "negative_accounts",
+    "open_accounts_with_issues",
+    "positive_accounts",
+    "high_utilization_accounts",
+    "all_accounts",
+    "inquiries",
+    "account_inquiry_matches",
+    "summary_metrics",
+    "strategic_recommendations"
+  ],
+  "additionalProperties": true
+}

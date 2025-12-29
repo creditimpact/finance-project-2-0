@@ -1,0 +1,37 @@
+{
+  "title": "Field Population",
+  "schemaVersion": 38,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Fields Populated",
+      "targets": [
+        {
+          "expr": "sum by (field) (rate(fields_populated_total[5m]))",
+          "legendFormat": "{{field}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Populate Errors",
+      "targets": [
+        {
+          "expr": "sum by (field) (rate(fields_populate_errors[5m]))",
+          "legendFormat": "{{field}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Missing Fields After Population",
+      "targets": [
+        {
+          "expr": "sum by (tag) (rate(finalize_missing_fields_after_population[5m]))",
+          "legendFormat": "{{tag}}"
+        }
+      ]
+    }
+  ]
+}

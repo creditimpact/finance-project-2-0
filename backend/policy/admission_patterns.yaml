@@ -1,0 +1,177 @@
+# backend/policy/admission_patterns.yaml
+# Purpose: Detect admissions/liability phrases in user statements and replace them
+#          with neutral, verification-oriented language BEFORE strategy/letters.
+# Notes:
+# - Regex uses (?i) for case-insensitive matching.
+# - Each entry has: id, pattern, replacement, and optional red_flags (array).
+# - Keep replacements factual and non-admitting. Do NOT introduce new facts.
+
+# =========================
+# Late / Delinquency wording
+# =========================
+- id: late_payment_i_was_late
+  pattern: '(?i)\b(i\s+was\s+late|i\s+was\s+late\s+on\s+(this|the)\s+account)\b'
+  replacement: 'Creditor reports late payment; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+- id: late_payment_i_paid_late
+  pattern: '(?i)\b(i\s+paid\s+late|paid\s+it\s+late)\b'
+  replacement: 'Creditor reports a late payment; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+- id: late_payment_i_missed_payment
+  pattern: '(?i)\b(i\s+missed\s+(a|the)\s+payment|missed\s+(a|the)\s+payment)\b'
+  replacement: 'Creditor reports a missed payment; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+- id: late_payment_forgot_to_pay
+  pattern: '(?i)\b(i\s+forgot\s+to\s+pay|forgot\s+to\s+pay)\b'
+  replacement: 'Client requests verification of the reported delinquency.'
+  red_flags: ['admission_of_fault']
+
+- id: late_payment_not_on_time
+  pattern: '(?i)\b(i\s+didn\'?t\s+pay\s+on\s+time|not\s+on\s+time)\b'
+  replacement: 'Creditor reports untimely payment; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+- id: late_payment_fell_behind
+  pattern: '(?i)\b(i\s+fell\s+behind|i\'?m\s+behind\s+on\s+payments)\b'
+  replacement: 'Creditor reports delinquency; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+# =========================
+# Fault / Responsibility
+# =========================
+- id: responsibility_my_fault
+  pattern: '(?i)\b(my\s+fault|it\'?s\s+my\s+fault|i\s+was\s+at\s+fault|i\'?m\s+at\s+fault)\b'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_of_fault']
+
+- id: responsibility_my_mistake
+  pattern: '(?i)\b(my\s+mistake|i\s+made\s+a\s+mistake|i\s+was\s+wrong|my\s+bad)\b'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_of_fault']
+
+# =========================
+# Debt ownership / Liability
+# =========================
+- id: liability_i_owe
+  pattern: '(?i)\b(i\s+owe|i\s+still\s+owe|i\s+owe\s+this\s+debt)\b'
+  replacement: 'Client disputes the debt as reported and requests verification.'
+  red_flags: ['admission_of_debt']
+
+- id: liability_it_is_my_debt
+  pattern: '(?i)\b(it\s+is\s+my\s+debt|it\'?s\s+my\s+debt|this\s+is\s+my\s+debt)\b'
+  replacement: 'Client disputes the debt as reported and requests verification.'
+  red_flags: ['admission_of_debt']
+
+- id: liability_it_was_my_account
+  pattern: '(?i)\b(it\s+was\s+my\s+account|this\s+was\s+my\s+account)\b'
+  replacement: 'Client requests verification of account ownership and reporting.'
+  red_flags: ['admission_of_ownership']
+
+- id: liability_i_opened_account
+  pattern: '(?i)\b(i\s+opened\s+(this|the)\s+account)\b'
+  replacement: 'Client requests verification of account ownership and reporting.'
+  red_flags: ['admission_of_ownership']
+
+# =========================
+# Promise to pay / Settlement admissions
+# =========================
+- id: promise_i_promise_to_pay
+  pattern: '(?i)\b(i\s+promise\s+to\s+pay|i\s+promise\s+i\'?ll\s+pay)\b'
+  replacement: 'Client requests verification of the account and its reporting.'
+  red_flags: ['promise_to_pay']
+
+- id: promise_i_will_pay
+  pattern: '(?i)\b(i\s+will\s+pay|i\'?ll\s+pay|i\s+agree\s+to\s+pay)\b'
+  replacement: 'Client requests verification of the account and its reporting.'
+  red_flags: ['promise_to_pay']
+
+- id: settlement_i_will_settle
+  pattern: '(?i)\b(i\s+will\s+settle|i\'?ll\s+settle|agree\s+to\s+settle|i\s+agree\s+to\s+settle)\b'
+  replacement: 'Client requests verification of the account and its reporting.'
+  red_flags: ['settlement_commitment']
+
+# =========================
+# Acknowledgement / Admission verbs
+# =========================
+- id: admit_acknowledge_generic
+  pattern: '(?i)\b(i\s+(admit|acknowledge|accept)\b)'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_generic']
+
+- id: admit_confess_generic
+  pattern: '(?i)\b(i\s+(confess|concede)\b)'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_generic']
+
+# =========================
+# Indirect admissions / Responsibility hints
+# =========================
+- id: indirect_should_have_paid
+  pattern: '(?i)\b(i\s+should(\'?ve)?\s+have?\s+paid|i\s+should(\'?ve)?\s+pay)\b'
+  replacement: 'Client requests verification of the reported delinquency.'
+  red_flags: ['admission_of_fault']
+
+- id: indirect_couldnt_pay
+  pattern: '(?i)\b(i\s+couldn\'?t\s+pay|i\s+wasn\'?t\s+able\s+to\s+pay|i\s+could\s+not\s+pay)\b'
+  replacement: 'Client requests verification of the reported delinquency.'
+  red_flags: ['admission_of_fault']
+
+- id: indirect_financial_hardship
+  pattern: '(?i)\b(financial\s+hardship|i\s+lost\s+my\s+job|couldn\'?t\s+afford)\b'
+  replacement: 'Client requests verification of the reported delinquency.'
+  red_flags: ['admission_context']
+
+# =========================
+# Passive-voice admissions (avoid self-blame)
+# =========================
+- id: passive_payment_was_late
+  pattern: '(?i)\b(payment\s+was\s+late|the\s+payment\s+was\s+late)\b'
+  replacement: 'Creditor reports a late payment; client requests verification of the reporting.'
+  red_flags: ['admission_of_fault']
+
+- id: passive_account_is_mine
+  pattern: '(?i)\b(the\s+account\s+is\s+mine|account\s+is\s+mine)\b'
+  replacement: 'Client requests verification of account ownership and reporting.'
+  red_flags: ['admission_of_ownership']
+
+# =========================
+# Apology phrases (often imply fault)
+# =========================
+- id: apology_sorry_for_late
+  pattern: '(?i)\b(sorry\s+for\s+(the\s+)?late\s+payment|apologize\s+for\s+the\s+late\s+payment)\b'
+  replacement: 'Client requests verification of the reported delinquency.'
+  red_flags: ['admission_of_fault']
+
+- id: apology_my_apologies
+  pattern: '(?i)\b(my\s+apologies|i\s+apologize)\b'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_context']
+
+# =========================
+# Ownership / Authorization (for inquiries)
+# =========================
+- id: inquiry_i_authorized
+  pattern: '(?i)\b(i\s+authorized\s+(this|the)\s+inquiry)\b'
+  replacement: 'Client requests verification of the inquiry and its reporting.'
+  red_flags: ['admission_of_authorization']
+
+- id: inquiry_i_applied
+  pattern: '(?i)\b(i\s+applied\s+for\s+(this|the)\s+credit|i\s+applied\s+for\s+(this|the)\s+card)\b'
+  replacement: 'Client requests verification of the inquiry and its reporting.'
+  red_flags: ['admission_of_application']
+
+# =========================
+# Catch-alls (keep last)
+# =========================
+- id: catchall_i_take_responsibility
+  pattern: '(?i)\b(i\s+take\s+responsibility|i\'?m\s+responsible)\b'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_of_fault']
+
+- id: catchall_generic_admission
+  pattern: '(?i)\b(i\s+admit(ed)?\b.*|i\s+acknowledge(d)?\b.*)\b'
+  replacement: 'Client disputes the accuracy of the reporting and requests verification.'
+  red_flags: ['admission_generic']

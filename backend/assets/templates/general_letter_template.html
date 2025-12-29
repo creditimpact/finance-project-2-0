@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Custom Letter</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            margin: 50px;
+            color: #000;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .signature {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px dashed #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <p><strong>{{ client_name }}</strong><br>{{ client_street }}<br>{{ client_city }}, {{ client_state }} {{ client_zip }}</p>
+        <p>{{ date }}</p>
+        {% if recipient_name %}
+        <p><strong>To:</strong> {{ recipient_name }}</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <p>{{ greeting_line }}</p>
+        <p>{{ body_paragraph }}</p>
+        {% if client_context_sentence %}<p>{{ client_context_sentence }}</p>{% endif %}
+    </div>
+
+    {% if supporting_docs %}
+    <div class="section">
+        <p><strong>Supporting Documents:</strong></p>
+        <ul>
+        {% for doc in supporting_docs %}
+            <li>{{ doc }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="signature">
+        <p>Sincerely,<br><strong>{{ client_name }}</strong></p>
+        <p style="margin-top: 40px;">__________________________<br>Signature</p>
+    </div>
+</body>
+</html>

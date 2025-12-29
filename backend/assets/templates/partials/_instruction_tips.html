@@ -1,0 +1,11 @@
+<h2>General Credit Tips</h2>
+<ul>
+  {% set tips_list = tips or [
+    'Pay all bills on time - payment history is the most important factor in your credit score.',
+    'Keep your credit usage below 30%, ideally under 10%.',
+    'Do not close old positive accounts - they help your average credit age.'
+  ] %}
+  {% for tip in tips_list %}
+  <li>{{ tip }}</li>
+  {% endfor %}
+</ul>

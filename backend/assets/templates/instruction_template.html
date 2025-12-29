@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Start Here - Instructions</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .account-table { width:100%; border-collapse:collapse; }
+    .account-table th, .account-table td { border:1px solid #ddd; padding:4px; text-align:left; }
+    .advisory { background:#fff8e1; padding:10px; margin-bottom:15px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="{{ logo_base64 }}" alt="Credit Impact Logo">
+    <h1>Instructions for {{ client_name }}</h1>
+  </header>
+
+  <div class="section">
+    <p><strong>Date:</strong> {{ date }}</p>
+  </div>
+
+  <div class="section instructions">
+    {% include "partials/_instruction_intro.html" %}
+    {% include "partials/_instruction_advisories.html" %}
+    {% include "partials/_instruction_actions.html" %}
+    {% include "partials/_instruction_tips.html" %}
+  </div>
+</body>
+</html>

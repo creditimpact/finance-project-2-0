@@ -1,0 +1,10 @@
+{% if advisories %}
+  {% for adv in advisories %}
+    {% if adv == 'duplicates' %}
+    <div class="advisory">
+      <h2>Warning: Potential Duplicate Negative Reporting Detected</h2>
+      <p>We noticed that your report might contain duplicate negative entries for the same debt (e.g., reported both as Charge-Off and Collection). This situation is more complex and may require manual review and a personalized dispute strategy. We recommend that you contact us directly so we can assist you with a tailored approach to address this properly.</p>
+    </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}

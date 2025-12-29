@@ -1,0 +1,222 @@
+schema_version: 3
+mode: broad            # "broad" or "strict"
+broadcast_disputes: 1  # 1/0 override of mode when needed
+threshold_points: 45   # kept for future scoring phases
+
+# default fallbacks by category if field-specific docs/min_days not found:
+category_defaults:
+  open_ident: { min_days: 5,  documents: [account_opening_contract, application_form, system_audit_log] }
+  terms:      { min_days: 8,  documents: [loan_agreement, monthly_statement, internal_balance_report] }
+  activity:   { min_days: 10, documents: [monthly_statement, system_activity_log, internal_report] }
+  status:     { min_days: 6,  documents: [cra_audit_log, cra_reporting_log, cra_report] }
+  history:    { min_days: 20, documents: [monthly_statements_2y, internal_payment_history, cra_report_7y] }
+
+defaults:
+  category: "unknown"
+  min_days: 3
+  points: 3
+  documents: []
+  strength: "soft"
+  ai_needed: false
+  min_corroboration: 1
+  conditional_gate: false
+  duration_unit: calendar_days
+
+fields:
+  # ---- Open/Identification ----
+  account_number_display:
+    category: open_ident
+    min_days: 2
+    duration_unit: business_days
+    points: 3
+    documents: [account_opening_contract, monthly_statement, collection_report]
+    strength: soft
+    ai_needed: false        # deterministic comparison handles mismatches
+    min_corroboration: 2
+    conditional_gate: true
+
+  date_opened:
+    category: open_ident
+    min_days: 3
+    duration_unit: business_days
+    points: 3
+    documents: [account_opening_contract, application_form, system_audit_log]
+    strength: strong
+    ai_needed: false
+
+  closed_date:
+    category: open_ident
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [closure_letter, internal_closure_report]
+    strength: strong
+    ai_needed: false
+
+  account_type:
+    category: open_ident
+    min_days: 2
+    duration_unit: business_days
+    points: 3
+    documents: [account_opening_contract, application_form, monthly_statement]
+    strength: soft
+    ai_needed: true         # semantic class differences
+
+  creditor_type:
+    category: open_ident
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [account_opening_contract, lender_agreement, cra_report]
+    strength: soft
+    ai_needed: true
+
+  # ---- Terms ----
+  high_balance:
+    category: terms
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [loan_agreement, monthly_statement, internal_balance_report]
+    strength: strong
+    ai_needed: false
+
+  credit_limit:
+    category: terms
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [credit_line_agreement, limit_change_record, monthly_statement]
+    strength: strong
+    ai_needed: false
+
+  term_length:
+    category: terms
+    min_days: 3
+    duration_unit: business_days
+    points: 3
+    documents: [loan_agreement, terms_sheet]
+    strength: soft
+    ai_needed: false
+
+  payment_amount:
+    category: terms
+    min_days: 5
+    duration_unit: business_days
+    points: 6
+    documents: [loan_agreement, amortization_schedule, monthly_statement]
+    strength: strong
+    ai_needed: false
+
+  payment_frequency:
+    category: terms
+    min_days: 3
+    duration_unit: business_days
+    points: 3
+    documents: [loan_agreement, terms_sheet, monthly_statement]
+    strength: soft
+    ai_needed: false
+
+  # ---- Activity ----
+  balance_owed:
+    category: activity
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [monthly_statement, balance_report, collection_report]
+    strength: strong
+    ai_needed: false
+
+  last_payment:
+    category: activity
+    min_days: 3
+    duration_unit: business_days
+    points: 3
+    documents: [monthly_statement, payment_receipt, internal_payment_log]
+    strength: strong
+    ai_needed: false
+
+  past_due_amount:
+    category: activity
+    min_days: 6
+    duration_unit: business_days
+    points: 6
+    documents: [monthly_statement, collection_report, delinquency_notice]
+    strength: strong
+    ai_needed: false
+
+  date_of_last_activity:
+    category: activity
+    min_days: 10
+    duration_unit: business_days
+    points: 8
+    documents: [monthly_statement, system_activity_log, internal_report]
+    strength: strong
+    ai_needed: false
+
+  # ---- Status / Reporting ----
+  account_status:
+    category: status
+    min_days: 10
+    duration_unit: business_days
+    points: 8
+    documents: [monthly_statement, cra_report, cra_audit_log]
+    strength: strong   # strong only when disagreement (open vs closed)
+    ai_needed: false
+
+  payment_status:
+    category: status
+    min_days: 19
+    duration_unit: business_days
+    points: 12
+    documents: [collection_notes, chargeoff_statement, monthly_statement]
+    strength: strong
+    ai_needed: false
+
+  account_rating:
+    category: status
+    min_days: 14
+    duration_unit: business_days
+    points: 10
+    documents: [cra_report, cra_audit_log]
+    strength: soft     # semantics differ across bureaus
+    ai_needed: true
+    min_corroboration: 2
+    conditional_gate: true
+
+  last_verified:
+    category: status
+    min_days: 6
+    duration_unit: business_days
+    points: 4
+    documents: [cra_report, cra_reporting_log, monthly_statement]
+    strength: strong
+    ai_needed: false
+
+  date_reported:
+    category: status
+    min_days: 3
+    duration_unit: business_days
+    points: 3
+    documents: [cra_reporting_log, cra_report]
+    strength: strong
+    ai_needed: false
+
+  # ---- Histories (NEW: must implement robust compare) ----
+  two_year_payment_history:
+    category: history
+    min_days: 14
+    duration_unit: business_days
+    points: 10
+    documents: [monthly_statements_2y, internal_payment_history]
+    strength: strong
+    ai_needed: false
+
+  seven_year_history:
+    category: history
+    min_days: 19
+    duration_unit: business_days
+    points: 12
+    documents: [cra_report_7y, cra_audit_logs, collection_history]
+    strength: strong
+    ai_needed: false

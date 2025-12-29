@@ -1,0 +1,38 @@
+version: 1
+bureaus: ["EQ", "TU", "EX"]
+
+fields:
+  current_balance:
+    type: number
+    bureau_labels:
+      EQ: ["Current Balance", "Balance"]
+      TU: ["Balance"]
+      EX: ["Current Balance Amount"]
+    coerce: number
+
+  credit_limit:
+    type: number
+    bureau_labels:
+      EQ: ["Credit Limit"]
+      TU: ["Credit Limit"]
+      EX: ["Credit Limit Amount"]
+    coerce: number
+
+  opened_date:
+    type: date
+    bureau_labels:
+      EQ: ["Date Opened"]
+      TU: ["Opened"]
+      EX: ["Date Opened"]
+    coerce: date_iso
+
+  account_status:
+    type: string
+    bureau_labels:
+      EQ: ["Account Status"]
+      TU: ["Status"]
+      EX: ["Status"]
+    coerce: string
+    normalize_map:
+      "open": ["OPEN", "Open", "Active"]
+      "closed": ["CLOSED", "Closed"]

@@ -1,0 +1,137 @@
+.api-base-warning {
+  background: #fff4e5;
+  color: #8a4600;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-weight: 600;
+  border-bottom: 1px solid #ffd9a6;
+}
+
+nav {
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 1rem;
+}
+
+nav a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error {
+  color: #d93025;
+}
+
+.account-block {
+  margin-bottom: 1.5rem;
+}
+
+.problem-list {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+}
+
+.problem-item.warning {
+  color: #e6a700;
+}
+
+.problem-item.critical {
+  color: #d93025;
+}
+
+.helper-text {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.summary-box {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
+.weak-fields-card {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+}
+
+.weak-fields-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.weak-fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.weak-fields-table th,
+.weak-fields-table td {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.weak-fields-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.weak-field-badges {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.weak-field-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: #eef2ff;
+  color: #1d3a8a;
+}
+
+.weak-field-badge--missing {
+  background: #fff4e5;
+  color: #8a4600;
+  border-color: #ffd9a6;
+}
+
+.weak-field-badge--mismatch {
+  background: #ffe5ec;
+  color: #921b3a;
+  border-color: #ffb6c9;
+}
+
+.weak-field-badge--both {
+  background: #e7f5ff;
+  color: #004a77;
+  border-color: #a8d8ff;
+}

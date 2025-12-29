@@ -1,0 +1,10 @@
+<html>
+  <body>
+    <p>{{ creditor_name }}</p>
+    <p>Account {{ account_number_masked }}{% if bureau %} ({{ bureau|upper }}){% endif %}</p>
+    <p>I am requesting the method of verification used to validate this account.</p>
+    <p>{{ legal_safe_summary }}</p>
+    <p>{{ cra_last_result }}</p>
+    <p>{{ days_since_cra_result }}</p>
+  </body>
+</html>

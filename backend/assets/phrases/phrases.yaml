@@ -1,0 +1,24 @@
+fraud_dispute:
+  neutral_client_sentence: "I am disputing this account because it does not belong to me."
+bureau_dispute:
+  neutral_client_sentence: "I am requesting that the bureau verify this account as required by law."
+inquiry_dispute:
+  neutral_client_sentence: "I did not authorize this inquiry and request its removal from my report."
+debt_validation:
+  neutral_client_sentence: "I request full validation of this debt in accordance with the Fair Debt Collection Practices Act."
+obsolescence:
+  neutral_client_sentence: "This account should no longer appear on my report because it is older than the allowable reporting period."
+mov:
+  neutral_client_sentence: "I am requesting the method of verification used to validate this account."
+medical_dispute:
+  neutral_client_sentence: "I dispute this medical-related account and request verification without disclosure of medical details."
+direct_dispute:
+  neutral_client_sentence: "I dispute the accuracy of this account and request that the furnisher investigate."
+goodwill:
+  neutral_client_sentence: "I respectfully request goodwill adjustment based on my positive account history."
+pay_for_delete:
+  neutral_client_sentence: "I am willing to resolve this account contingent on its deletion from my credit report."
+cease_and_desist:
+  neutral_client_sentence: "I request that all further communication regarding this account cease immediately."
+custom_letter:
+  neutral_client_sentence: "This letter is submitted to formally dispute or clarify the information listed above."

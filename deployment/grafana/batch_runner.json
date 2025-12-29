@@ -1,0 +1,24 @@
+{
+  "title": "Batch Runner",
+  "schemaVersion": 38,
+  "version": 0,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Job Success/Failure",
+      "targets": [
+        {"expr": "sum(rate(batch_runner_job_success_total[5m]))", "legendFormat": "success"},
+        {"expr": "sum(rate(batch_runner_job_failure_total[5m]))", "legendFormat": "failure"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Job Duration p95",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(batch_runner_job_duration_ms_bucket[5m])) by (le))"
+        }
+      ]
+    }
+  ]
+}

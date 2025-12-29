@@ -1,0 +1,36 @@
+{
+  "transunion": {
+    "account_number_display": "9000001111",
+    "date_opened": "2011-01-08",
+    "balance_owed": "$7,520",
+    "account_type": "Educational",
+    "account_status": "Open",
+    "original_creditor": "Example University FCU"
+  },
+  "experian": {
+    "account_number_display": "9000001111",
+    "date_opened": "2011-01-08",
+    "balance_owed": "$7,520",
+    "account_type": "Educational",
+    "account_status": "Open",
+    "original_creditor": "Example University FCU"
+  },
+  "equifax": {
+    "account_number_display": "9000001111",
+    "date_opened": "2011-01-08",
+    "balance_owed": "$7,520",
+    "account_type": "Educational",
+    "account_status": "Open",
+    "original_creditor": "Example University FCU"
+  },
+  "two_year_payment_history": {
+    "transunion": ["OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK"],
+    "experian": ["OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK"],
+    "equifax": ["OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK", "OK"]
+  },
+  "seven_year_history": {
+    "transunion": {"late30": 0, "late60": 0, "late90": 0},
+    "experian": {"late30": 0, "late60": 0, "late90": 0},
+    "equifax": {"late30": 0, "late60": 0, "late90": 0}
+  }
+}

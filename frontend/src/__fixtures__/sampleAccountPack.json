@@ -1,0 +1,53 @@
+{
+  "holder_name": "John Doe",
+  "primary_issue": "wrong_account",
+  "display": {
+    "display_version": "2024-01-01",
+    "holder_name": "John Doe",
+    "primary_issue": "wrong_account",
+    "account_number": {
+      "per_bureau": {
+        "transunion": "****1234",
+        "experian": "XXXX1234",
+        "equifax": "--"
+      }
+    },
+    "account_type": {
+      "per_bureau": {
+        "transunion": "Credit Card",
+        "experian": "Credit Card",
+        "equifax": "--"
+      }
+    },
+    "status": {
+      "per_bureau": {
+        "transunion": "Closed",
+        "experian": "Closed",
+        "equifax": "--"
+      }
+    },
+    "balance_owed": {
+      "per_bureau": {
+        "transunion": "$100",
+        "experian": "$100",
+        "equifax": "--"
+      }
+    },
+    "date_opened": {
+      "transunion": "2023-01-01",
+      "experian": "2023-01-02",
+      "equifax": "--"
+    },
+    "closed_date": {
+      "transunion": "2023-02-01",
+      "experian": "--",
+      "equifax": "--"
+    },
+    "questions": {
+      "ownership": null,
+      "recognize": null,
+      "explanation": null,
+      "identity_theft": null
+    }
+  }
+}

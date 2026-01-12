@@ -40,7 +40,6 @@ def read_bureau_file(tmp_path: Path, account_key: str, bureau: str) -> dict:
 def clear_env(monkeypatch):
     monkeypatch.setenv("TRADELINE_CHECK_ENABLED", "1")
     monkeypatch.setenv("TRADELINE_CHECK_WRITE_DEBUG", "1")
-    monkeypatch.setenv("TRADELINE_CHECK_GATE_STRICT", "0")
     monkeypatch.setenv("TRADELINE_CHECK_PLACEHOLDER_TOKENS", "--,n/a,unknown")
     monkeypatch.setenv("TRADELINE_CHECK_WRITE_EMPTY_RESULTS", "0")
     yield
@@ -242,9 +241,8 @@ def test_q4_non_blocking_invariants(tmp_path: Path):
     data = read_bureau_file(tmp_path, "10", "experian")
     assert data["status"] == "ok"
     assert data.get("findings", []) == []
-    assert data["gate"]["version"] == "q6_presence_v1"
     assert data["coverage"]["version"] == "coverage_v1"
-    # Q1-Q3 should still exist
+    # Q1, Q2, Q4, Q5 should still exist
     assert "Q1" in data["root_checks"]
     assert "Q2" in data["root_checks"]
-    assert "Q3" in data["root_checks"]
+    assert "Q4" in data["root_checks"]

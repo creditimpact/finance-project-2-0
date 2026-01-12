@@ -207,7 +207,23 @@ def build_rule_fields_from_triad(account: dict) -> tuple[dict, dict]:
         _total_lates("equifax"),
     )
 
-    two_year = account.get("two_year_payment_history") or {}
+    # Prefer monthly_v2; fallback to legacy for safety
+    two_year = {}
+    monthly_v2 = account.get("two_year_payment_history_monthly_tsv_v2") or {}
+    if isinstance(monthly_v2, dict):
+        for bureau, entries in monthly_v2.items():
+            if isinstance(entries, list):
+                statuses = []
+                for entry in entries:
+                    if isinstance(entry, dict):
+                        status = entry.get("status")
+                        statuses.append(str(status) if status else "--")
+                    else:
+                        statuses.append(str(entry))
+                two_year[str(bureau)] = statuses
+    
+    if not two_year:
+        two_year = account.get("two_year_payment_history") or {}
 
     def _any_derog(tokens: list[str]) -> bool:
         return any(t for t in (tokens or []) if (t or "").upper() not in ("", "OK"))

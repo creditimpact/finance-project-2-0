@@ -1,0 +1,192 @@
+"""F2.B02 — Post-Closure Activity Contradiction (state-conditioned behavioral).
+
+Evaluates whether any activity or payment dates occur AFTER the declared closed_date,
+which is logically impossible for a closed account.
+
+Eligible only for R1 states 3 and 4 (Q1=closed, Q2=ok or conflict).
+These states guarantee closed_date exists and is parseable.
+
+This branch does NOT read monthly history, date_reported, last_verified, or date_convention.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import date, datetime
+from typing import Any, Mapping
+
+from backend.core.logic.report_analysis.extractors.tokens import parse_date_any
+
+log = logging.getLogger(__name__)
+
+# Eligible R1 states: Q1=closed AND Q2!=skipped_missing_data (states 3 and 4)
+ELIGIBLE_R1_STATES = {3, 4}
+
+# Fields to check for post-closure activity
+ACTIVITY_FIELDS = ("last_payment", "date_of_last_activity")
+
+
+def _is_missing(value: object, placeholders: set[str]) -> bool:
+    """Check if a value is missing or placeholder."""
+    if value is None:
+        return True
+    if isinstance(value, str):
+        s = value.strip()
+        if s == "":
+            return True
+        if s.lower() in placeholders:
+            return True
+        return False
+    return False
+
+
+def _parse_to_date(raw: object) -> date | None:
+    """Parse a raw date string to datetime.date; returns None on failure."""
+    if not isinstance(raw, str):
+        return None
+    iso = parse_date_any(raw)
+    if not iso:
+        return None
+    try:
+        return datetime.strptime(iso, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+
+def evaluate_f2_b02(
+    bureau_obj: Mapping[str, object],
+    payload: Mapping[str, Any],
+    placeholders: set[str],
+) -> dict:
+    """Evaluate F2.B02 post-closure activity contradiction for a single bureau.
+
+    Parameters
+    ----------
+    bureau_obj: Mapping[str, object]
+        Bureau-local object (e.g., bureaus.json["equifax"]).
+    payload: Mapping[str, Any]
+        Full payload with routing and root_checks results.
+    placeholders: set[str]
+        Lowercased placeholder tokens configured in environment.
+
+    Returns
+    -------
+    dict
+        F2.B02 result dictionary to be stored under payload["branch_results"]["results"]["F2.B02"].
+    """
+    # Extract routing information
+    routing = payload.get("routing", {})
+    r1_result = routing.get("R1", {}) if isinstance(routing, Mapping) else {}
+    r1_state_num = r1_result.get("state_num") if isinstance(r1_result, Mapping) else None
+
+    # Extract Q1 and Q2 status for trigger evidence
+    root_checks = payload.get("root_checks", {})
+    q1_result = root_checks.get("Q1", {}) if isinstance(root_checks, Mapping) else {}
+    q2_result = root_checks.get("Q2", {}) if isinstance(root_checks, Mapping) else {}
+    
+    q1_declared_state = q1_result.get("declared_state") if isinstance(q1_result, Mapping) else None
+    q2_status = q2_result.get("status") if isinstance(q2_result, Mapping) else None
+
+    # Check eligibility based on R1 state
+    if r1_state_num not in ELIGIBLE_R1_STATES:
+        return {
+            "version": "f2_b02_post_closure_activity_v1",
+            "status": "skipped",
+            "eligible": False,
+            "executed": False,
+            "fired": False,
+            "trigger": {
+                "r1_state_num": r1_state_num,
+                "q1_declared_state": q1_declared_state,
+                "q2_status": q2_status,
+            },
+            "explanation": "F2.B02 skipped: not eligible (R1.state_num must be 3 or 4; requires Q1=closed with Q2=ok or conflict)",
+        }
+
+    # At this point, closed_date is GUARANTEED to be parseable by routing
+    # No need for internal field checks
+    closed_date_raw = bureau_obj.get("closed_date")
+    closed_date = _parse_to_date(closed_date_raw)
+
+    # Defensive check (should never happen given routing guarantees)
+    if closed_date is None:
+        log.warning(
+            "F2_B02_UNEXPECTED_MISSING_CLOSED_DATE r1_state_num=%s closed_date_raw=%r",
+            r1_state_num,
+            closed_date_raw,
+        )
+        return {
+            "version": "f2_b02_post_closure_activity_v1",
+            "status": "unknown",
+            "eligible": True,
+            "executed": True,
+            "fired": False,
+            "trigger": {
+                "r1_state_num": r1_state_num,
+                "q1_declared_state": q1_declared_state,
+                "q2_status": q2_status,
+            },
+            "explanation": "F2.B02 unknown: unable to parse closed_date despite routing eligibility",
+        }
+
+    # Check each activity field for post-closure violations
+    for field in ACTIVITY_FIELDS:
+        raw_val = bureau_obj.get(field)
+        
+        # Skip missing/placeholder values
+        if _is_missing(raw_val, placeholders):
+            continue
+        
+        # Parse the activity date
+        activity_date = _parse_to_date(raw_val)
+        
+        # Skip unparseable dates (not a violation, just can't compare)
+        if activity_date is None:
+            continue
+        
+        # Check for violation: activity date AFTER closed date
+        if activity_date > closed_date:
+            return {
+                "version": "f2_b02_post_closure_activity_v1",
+                "status": "conflict",
+                "eligible": True,
+                "executed": True,
+                "fired": True,
+                "trigger": {
+                    "r1_state_num": r1_state_num,
+                    "q1_declared_state": q1_declared_state,
+                    "q2_status": q2_status,
+                },
+                "evidence": {
+                    "closed_date_raw": closed_date_raw,
+                    "closed_date_parsed": closed_date.isoformat(),
+                    "violating_field": field,
+                    "violating_date_raw": raw_val,
+                    "violating_date_parsed": activity_date.isoformat(),
+                },
+                "explanation": f"F2.B02 conflict: {field} occurs after closed_date",
+            }
+
+    # No violations found - all activity dates are before or equal to closed_date
+    checked_fields = [
+        field for field in ACTIVITY_FIELDS
+        if not _is_missing(bureau_obj.get(field), placeholders)
+    ]
+    
+    return {
+        "version": "f2_b02_post_closure_activity_v1",
+        "status": "ok",
+        "eligible": True,
+        "executed": True,
+        "fired": False,
+        "trigger": {
+            "r1_state_num": r1_state_num,
+            "q1_declared_state": q1_declared_state,
+            "q2_status": q2_status,
+        },
+        "evidence": {
+            "closed_date_raw": closed_date_raw,
+            "closed_date_parsed": closed_date.isoformat(),
+            "checked_fields": checked_fields,
+        },
+        "explanation": "F2.B02 ok: no activity or payments detected after closed_date",
+    }

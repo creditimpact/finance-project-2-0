@@ -99,6 +99,48 @@ def _to_iso(parts: dict) -> str:
     return f"{Y:04d}-{M:02d}-{D:02d}"
 
 
+def parse_date_with_convention(text: str, convention: str, month_language: str | None = None) -> Optional[str]:
+    """Parse numeric dates using an explicit convention (DMY or MDY).
+
+    Returns ISO YYYY-MM-DD or None on failure. Month language is reserved
+    for future localized month-name parsing.
+    """
+
+    if not isinstance(text, str):
+        return None
+    s = text.strip()
+    if not s:
+        return None
+
+    convention_upper = (convention or "").upper()
+
+    # ISO: YYYY-MM-DD
+    m_iso = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})$", s)
+    if m_iso:
+        try:
+            return _to_iso({"Y": m_iso.group(1), "M": m_iso.group(2), "D": m_iso.group(3)})
+        except Exception:
+            return None
+
+    if convention_upper not in {"DMY", "MDY"}:
+        return None
+
+    m_numeric = re.match(r"^(\d{1,2})[\./\-\s](\d{1,2})[\./\-\s](\d{4})$", s)
+    if not m_numeric:
+        return None
+
+    first, second, year = m_numeric.group(1), m_numeric.group(2), m_numeric.group(3)
+    if convention_upper == "DMY":
+        order = {"D": first, "M": second, "Y": year}
+    else:
+        order = {"M": first, "D": second, "Y": year}
+
+    try:
+        return _to_iso(order)
+    except Exception:
+        return None
+
+
 def parse_date_any(text: str) -> Optional[str]:
     """Parse various date formats and normalize to YYYY-MM-DD."""
     if not text:

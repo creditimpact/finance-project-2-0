@@ -240,3 +240,75 @@ def test_points_diagnostics_path_absent_when_persistence_disabled(monkeypatch, t
         assert not diagnostics_root.exists()
     finally:
         merge_config.reset_merge_config_cache()
+
+
+def test_history_2y_prefers_inline_over_monthly_and_legacy():
+    payload = {
+        "history_2y": {"transunion": ["OK", "LATE"]},
+        "two_year_payment_history_monthly_tsv_v2": {
+            "transunion": [
+                {"month": "2024-01", "status": "IGNORED"},
+            ]
+        },
+        "two_year_payment_history": {"transunion": ["LEGACY"]},
+    }
+
+    context = account_merge._build_inline_points_mode_context(payload)
+
+    assert context["history_2y"]["transunion"] == ["OK", "LATE"]
+
+
+def test_history_2y_uses_monthly_tsv_v2_when_inline_missing():
+    payload = {
+        "two_year_payment_history_monthly_tsv_v2": {
+            "equifax": [
+                {"month": "2024-01", "status": "OK"},
+                {"month": "2024-02", "status": None},
+                {"month": "2024-03", "status": ""},
+            ]
+        }
+    }
+
+    context = account_merge._build_inline_points_mode_context(payload)
+
+    assert context["history_2y"]["equifax"] == ["OK", "--", "--"]
+
+
+def test_history_2y_falls_back_to_legacy_when_monthly_absent():
+    payload = {
+        "two_year_payment_history": {
+            "experian": ["30", "60"],
+        }
+    }
+
+    context = account_merge._build_inline_points_mode_context(payload)
+
+    assert context["history_2y"]["experian"] == ["30", "60"]
+
+
+def test_history_2y_monthly_context_is_comparable():
+    payload = {
+        "two_year_payment_history_monthly_tsv_v2": {
+            "transunion": [
+                {"month": "2024-01", "status": "OK"},
+                {"month": "2024-02", "status": "--"},
+            ],
+            "experian": [
+                {"month": "2024-01", "status": "OK"},
+                {"month": "2024-02", "status": "--"},
+            ],
+        }
+    }
+
+    left_ctx = account_merge._build_inline_points_mode_context(payload)
+    right_ctx = account_merge._build_inline_points_mode_context(payload)
+
+    matched, aux = account_merge._points_mode_compare_history_2y(
+        left_ctx,
+        right_ctx,
+        threshold=0.9,
+    )
+
+    assert matched is True
+    assert aux.get("match_score") == 1.0
+    assert aux.get("compared") == 2

@@ -11,6 +11,7 @@ from typing import Mapping
 from backend.validation.pipeline import AccountContext
 from backend.tradeline_check.config import TradlineCheckConfig
 from backend.tradeline_check.schema import bureau_output_template, SUPPORTED_BUREAUS
+from backend.tradeline_check.date_convention import load_date_convention
 from backend.tradeline_check.writer import write_bureau_findings
 
 log = logging.getLogger(__name__)
@@ -150,11 +151,32 @@ def _compute_coverage(
 
     def _is_history_present(history_key: str) -> bool:
         """Check if a history block (e.g., 'two_year_payment_history') is present for this bureau."""
+        # Prefer monthly TSV v2 for 2Y history, fall back to legacy list/string
+        if history_key == "two_year_payment_history":
+            monthly_block = bureaus_data.get("two_year_payment_history_monthly_tsv_v2")
+            if isinstance(monthly_block, Mapping):
+                monthly_entries = monthly_block.get(bureau)
+                if isinstance(monthly_entries, list) and any(
+                    isinstance(entry, Mapping) and str(entry.get("month", "")).strip()
+                    for entry in monthly_entries
+                ):
+                    return True
+
         # History blocks are keyed by bureau name in bureaus.json root
         hist_block = bureaus_data.get(history_key)
         if not isinstance(hist_block, Mapping):
             return False
-        # Check if this bureau has an entry in the history block (non-empty)
+
+        # two_year_payment_history legacy fallback: non-empty list or string
+        if history_key == "two_year_payment_history":
+            hist_entry = hist_block.get(bureau)
+            if isinstance(hist_entry, list):
+                return len(hist_entry) > 0
+            if isinstance(hist_entry, str):
+                return bool(hist_entry.strip())
+            return False
+
+        # Default behavior for other history blocks (unchanged)
         hist_entry = hist_block.get(bureau)
         if hist_entry is None or hist_entry == "" or (isinstance(hist_entry, str) and hist_entry.strip() == ""):
             return False
@@ -163,16 +185,10 @@ def _compute_coverage(
     missing_core: dict[str, list[str]] = {
         "Q1": [],
         "Q2": [],
-        "Q3": [],
-        "Q4": [],
-        "Q5": [],
     }
     missing_branch: dict[str, list[str]] = {
         "Q1": [],
         "Q2": [],
-        "Q3": [],
-        "Q4": [],
-        "Q5": [],
     }
 
     # ── Q1: Account State ──────────────────────────────────────────────
@@ -209,47 +225,7 @@ def _compute_coverage(
         if not _is_history_present(hist_key):
             missing_branch["Q2"].append(hist_key)
 
-    # ── Q3: Timeline Coherence ────────────────────────────────────────
-    q3_core = ["date_opened", "date_reported", "date_of_last_activity", "last_payment", "closed_date"]
-    q3_branch = []
-    # History blocks (bureau-scoped)
-    q3_branch_history = ["two_year_payment_history", "seven_year_history"]
-
-    for field in q3_core:
-        if _is_field_missing(field):
-            missing_core["Q3"].append(field)
-
-    for field in q3_branch:
-        if _is_field_missing(field):
-            missing_branch["Q3"].append(field)
-
-    for hist_key in q3_branch_history:
-        if not _is_history_present(hist_key):
-            missing_branch["Q3"].append(hist_key)
-
-    # ── Q4: Account Type Integrity ────────────────────────────────────
-    q4_core = ["account_type", "creditor_type", "term_length", "payment_frequency"]
-    q4_branch = ["credit_limit", "high_balance", "payment_amount", "original_creditor"]
-
-    for field in q4_core:
-        if _is_field_missing(field):
-            missing_core["Q4"].append(field)
-
-    for field in q4_branch:
-        if _is_field_missing(field):
-            missing_branch["Q4"].append(field)
-
-    # ── Q5: Ownership & Responsibility ─────────────────────────────────
-    q5_core = ["account_description"]
-    q5_branch: list[str] = []  # no branch fields in Q5 v1
-
-    for field in q5_core:
-        if _is_field_missing(field):
-            missing_core["Q5"].append(field)
-
-    for field in q5_branch:
-        if _is_field_missing(field):
-            missing_branch["Q5"].append(field)
+    # Coverage for Q4/Q5 removed by design: coverage now tracks only Q1 and Q2
 
     return {
         "version": "coverage_v1",
@@ -331,6 +307,31 @@ def run_for_account(
         bureaus_data = _load_bureaus_data(bureaus_path)
         placeholders = set(cfg.placeholder_tokens or set())
 
+        # Load date convention once per account (non-blocking)
+        try:
+            date_convention_block = load_date_convention(account_dir)
+        except Exception as dc_exc:  # pragma: no cover - defensive
+            log.warning(
+                "TRADELINE_CHECK_DATE_CONVENTION_LOAD_FAILED account_key=%s error=%s",
+                account_key,
+                dc_exc,
+                exc_info=True,
+            )
+            date_convention_block = {
+                "version": "date_convention_v1",
+                "scope": "unknown",
+                "convention": "unknown",
+                "month_language": "unknown",
+                "confidence": 0.0,
+                "evidence_counts": {},
+                "detector_version": "unknown",
+                "source": {
+                    "file_abs": None,
+                    "file_rel": "traces/date_convention.json",
+                    "created_at": None,
+                },
+            }
+
         # Write one JSON per bureau found
         for bureau in sorted(bureaus_present):
             try:
@@ -341,81 +342,18 @@ def run_for_account(
                     generated_at=timestamp,
                 )
 
-                # ── Q6 Presence-only Gate (bureau-isolated) ─────────────
+                payload["date_convention"] = date_convention_block
+
+                # Get bureau object for evaluations
                 bureau_obj = (
                     bureaus_data.get(bureau) if isinstance(bureaus_data, Mapping) else None
                 )
                 if not isinstance(bureau_obj, Mapping):
                     bureau_obj = {}
 
-                # Fields groups
-                status_fields = ("account_status", "account_rating", "payment_status")
-                activity_fields = ("date_of_last_activity", "last_payment")
-                secondary_dates = (
-                    "date_reported",
-                    "date_of_last_activity",
-                    "last_payment",
-                    "closed_date",
-                )
-
-                # Presence checks
-                status_present = any(not _is_missing(bureau_obj.get(f), placeholders) for f in status_fields)
-                activity_present = any(not _is_missing(bureau_obj.get(f), placeholders) for f in activity_fields)
-                opened_present = not _is_missing(bureau_obj.get("date_opened"), placeholders)
-                secondary_present = any(not _is_missing(bureau_obj.get(f), placeholders) for f in secondary_dates)
-                type_present = any(
-                    not _is_missing(bureau_obj.get(f), placeholders)
-                    for f in ("account_type", "creditor_type")
-                )
-                desc_present = not _is_missing(bureau_obj.get("account_description"), placeholders)
-
-                eligible = {
-                    "Q1": bool(status_present),
-                    "Q2": bool(status_present and activity_present),
-                    "Q3": bool(opened_present and secondary_present),
-                    "Q4": bool(type_present),
-                    "Q5": bool(desc_present),
-                }
-
-                missing_fields: dict[str, list[str]] = {"Q1": [], "Q2": [], "Q3": [], "Q4": [], "Q5": []}
-
-                # Q1 missing: include all three only if none present
-                if not status_present:
-                    missing_fields["Q1"] = list(status_fields)
-
-                # Q2 missing: reflect missing group(s)
-                if not status_present:
-                    missing_fields["Q2"].extend(status_fields)
-                if not activity_present:
-                    missing_fields["Q2"].extend(activity_fields)
-
-                # Q3 missing: require date_opened and at least one secondary
-                if not opened_present:
-                    missing_fields["Q3"].append("date_opened")
-                if not secondary_present:
-                    missing_fields["Q3"].extend(list(secondary_dates))
-
-                # Q4 missing: include both only if none present
-                if not type_present:
-                    missing_fields["Q4"] = ["account_type", "creditor_type"]
-
-                # Q5 missing: account_description
-                if not desc_present:
-                    missing_fields["Q5"] = ["account_description"]
-
-                payload["gate"] = {
-                    "version": "q6_presence_v1",
-                    "eligible": eligible,
-                    "missing_fields": missing_fields,
-                    "placeholders": sorted(placeholders),
-                }
-
                 payload["root_checks"] = {
                     "Q1": {"status": "not_implemented_yet"},
                     "Q2": {"status": "not_implemented_yet"},
-                    "Q3": {"status": "not_implemented_yet"},
-                    "Q4": {"status": "not_implemented_yet"},
-                    "Q5": {"status": "skipped_missing_data"},
                 }
 
                 # ── Coverage Map (non-blocking, capability awareness) ───
@@ -451,61 +389,176 @@ def run_for_account(
                         q2_exc,
                         exc_info=True,
                     )
+                # Q4/Q5 removed: no evaluation here
 
-                # ── Q3 Timeline coherence (non-blocking) ──────────────
+                # ── F0.A01: Time Ceiling Integrity (record-level, non-blocking) ──
                 try:
-                    from backend.tradeline_check.q3_timeline import evaluate_q3
-                    payload["root_checks"]["Q3"] = evaluate_q3(
+                    from backend.tradeline_check.f0_a01_time_ceiling_integrity import evaluate_f0_a01
+
+                    record_integrity = payload.setdefault("record_integrity", {})
+                    family_block = record_integrity.setdefault("F0", {})
+                    family_block["A01"] = evaluate_f0_a01(
+                        payload,
                         bureau_obj,
+                        bureaus_data,
+                        bureau,
                         placeholders,
                     )
-                except Exception as q3_exc:
+                except Exception as f0_a01_exc:
                     log.warning(
-                        "TRADELINE_CHECK_Q3_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        "TRADELINE_CHECK_F0_A01_EVAL_FAILED account_key=%s bureau=%s error=%s",
                         account_key,
                         bureau,
-                        q3_exc,
+                        f0_a01_exc,
                         exc_info=True,
                     )
 
-                # ── Q4 Account Type Integrity (non-blocking) ─────────
+                # ── F0.A02: Opening Date Lower Bound Integrity (record-level, non-blocking) ──
                 try:
-                    from backend.tradeline_check.q4_type_integrity import evaluate_q4
-                    payload["root_checks"]["Q4"] = evaluate_q4(
+                    from backend.tradeline_check.f0_a02_opening_date_lower_bound import evaluate_f0_a02
+
+                    record_integrity = payload.setdefault("record_integrity", {})
+                    family_block = record_integrity.setdefault("F0", {})
+                    family_block["A02"] = evaluate_f0_a02(
+                        payload,
                         bureau_obj,
+                        bureaus_data,
+                        bureau,
                         placeholders,
                     )
-                except Exception as q4_exc:
+                except Exception as f0_a02_exc:
                     log.warning(
-                        "TRADELINE_CHECK_Q4_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        "TRADELINE_CHECK_F0_A02_EVAL_FAILED account_key=%s bureau=%s error=%s",
                         account_key,
                         bureau,
-                        q4_exc,
+                        f0_a02_exc,
                         exc_info=True,
                     )
 
-                # ── Q5 Ownership & Responsibility (non-blocking) ─────────
+                # ── R1 Router (24-state classifier, non-blocking) ────
                 try:
-                    from backend.tradeline_check.q5_ownership import evaluate_q5
-                    payload["root_checks"]["Q5"] = evaluate_q5(
-                        bureau_obj,
-                        placeholders,
-                    )
-                except Exception as q5_exc:
+                    from backend.tradeline_check.r1_router import evaluate_r1
+                    payload.setdefault("routing", {})
+                    payload["routing"]["R1"] = evaluate_r1(payload.get("root_checks", {}))
+                except Exception as r1_exc:
                     log.warning(
-                        "TRADELINE_CHECK_Q5_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        "TRADELINE_CHECK_R1_EVAL_FAILED account_key=%s bureau=%s error=%s",
                         account_key,
                         bureau,
-                        q5_exc,
+                        r1_exc,
                         exc_info=True,
                     )
 
-                # Optional strict mode: block if any of Q1/Q3/Q4 ineligible
-                if cfg.gate_strict:
-                    failed = [q for q in ("Q1", "Q3", "Q4") if not eligible.get(q, False)]
-                    if failed:
-                        payload["status"] = "blocked"
-                        payload["blocked_questions"] = failed
+                # ── Branch Families Visibility (always-on, non-blocking) ───
+                try:
+                    from backend.tradeline_check.branch_visibility import build_branches_block
+
+                    payload["branches"] = build_branches_block(payload)
+                except Exception as branches_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_BRANCH_VISIBILITY_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        branches_exc,
+                        exc_info=True,
+                    )
+
+                # ── Branch Results Container (always-on, non-blocking) ─────
+                try:
+                    from backend.tradeline_check.branch_results import ensure_branch_results_container
+
+                    ensure_branch_results_container(payload)
+                except Exception as branch_results_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_BRANCH_RESULTS_INIT_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        branch_results_exc,
+                        exc_info=True,
+                    )
+
+                # ── FX: Always-Run Behavioral Branches (ungated) ─────────────
+                # FX branches run unconditionally for every bureau. They do NOT:
+                #   - read or depend on R1 state
+                #   - affect routing or root_checks
+                #   - modify payload status or gate
+                # FX provides behavioral consistency signals complementary to Q1–Q5/R1.
+
+                # ── FX.B01: Last Payment Monotonicity (ungated, always-run) ────
+                try:
+                    from backend.tradeline_check.fx_b01_last_payment_monotonicity import evaluate_fx_b01
+                    fx_b01_result = evaluate_fx_b01(
+                        bureau_obj,
+                        bureaus_data,
+                        bureau,
+                        placeholders,
+                    )
+                    if isinstance(payload.get("branch_results"), Mapping):
+                        if isinstance(payload["branch_results"].get("results"), dict):
+                            payload["branch_results"]["results"]["FX.B01"] = fx_b01_result
+                except Exception as fx_b01_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_FX_B01_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        fx_b01_exc,
+                        exc_info=True,
+                    )
+
+                # ── F2.B01: Activity vs Monthly History (non-blocking) ────
+                try:
+                    from backend.tradeline_check.f2_b01_activity_vs_monthly_history import evaluate_f2_b01
+                    f2_b01_result = evaluate_f2_b01(
+                        payload,
+                        bureau_obj,
+                        bureaus_data,
+                        bureau,
+                        placeholders,
+                    )
+                    if isinstance(payload.get("branch_results"), Mapping):
+                        if isinstance(payload["branch_results"].get("results"), dict):
+                            payload["branch_results"]["results"]["F2.B01"] = f2_b01_result
+                except Exception as f2_b01_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_F2_B01_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        f2_b01_exc,
+                        exc_info=True,
+                    )
+
+                # ── F2.B02: Post-Closure Activity Contradiction (non-blocking) ────
+                try:
+                    from backend.tradeline_check.f2_b02_post_closure_activity import evaluate_f2_b02
+                    f2_b02_result = evaluate_f2_b02(
+                        bureau_obj,
+                        payload,
+                        placeholders,
+                    )
+                    if isinstance(payload.get("branch_results"), Mapping):
+                        if isinstance(payload["branch_results"].get("results"), dict):
+                            payload["branch_results"]["results"]["F2.B02"] = f2_b02_result
+                except Exception as f2_b02_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_F2_B02_EVAL_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        f2_b02_exc,
+                        exc_info=True,
+                    )
+
+                # ── Update branches visibility lists (non-blocking) ────────
+                try:
+                    from backend.tradeline_check.branch_visibility import update_branches_visibility
+                    update_branches_visibility(payload)
+                except Exception as vis_exc:
+                    log.warning(
+                        "TRADELINE_CHECK_BRANCHES_VISIBILITY_UPDATE_FAILED account_key=%s bureau=%s error=%s",
+                        account_key,
+                        bureau,
+                        vis_exc,
+                        exc_info=True,
+                    )
 
                 # Atomically write the bureau output
                 output_path = write_bureau_findings(

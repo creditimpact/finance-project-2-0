@@ -2303,6 +2303,71 @@ def _pick_headline(
             return j, txt.strip(), "backtrack"
 
     start_idx = triad_idx if triad_idx is not None else anchor_idx
+
+    # Cross-page bounded lookback (1–3 lines) when no same-page heading found
+    # Guardrails:
+    # - Anchor must be near top of its page (first N lines)
+    # - Only inspect last K lines of the previous page
+    # - Candidate must pass existing headline heuristics
+    # - Do NOT move start_idx across pages; only recover headline text
+    try:
+        TOP_OF_PAGE_N = 3
+        CROSS_PAGE_MAX_BACK = 3
+
+        # Determine anchor position on its page
+        anchor_page = lines[anchor_idx]["page"]
+        # Find the first index of this page by scanning backward until page changes
+        page_first_idx = anchor_idx
+        while page_first_idx - 1 >= 0 and lines[page_first_idx - 1]["page"] == anchor_page:
+            page_first_idx -= 1
+        anchor_row_on_page = anchor_idx - page_first_idx  # 0-based within page
+
+        if anchor_row_on_page <= TOP_OF_PAGE_N - 1 and anchor_page > 1:
+            # Scan into previous page tail, up to CROSS_PAGE_MAX_BACK lines
+            prev_page = anchor_page - 1
+            checked = 0
+            j = anchor_idx - 1
+            while j >= 0 and checked < CROSS_PAGE_MAX_BACK:
+                if lines[j]["page"] != prev_page:
+                    if lines[j]["page"] < prev_page:
+                        # We've moved beyond the previous page entirely
+                        break
+                    # If we are still on current page, move back to reach previous page
+                    j -= 1
+                    continue
+                # We are on the previous page tail
+                txt = (lines[j].get("text") or "").strip()
+                # Use existing headline heuristic first
+                if _looks_like_headline(txt):
+                    # Additional basic exclusions to avoid footers/URLs/dates
+                    s = txt.lower()
+                    if (
+                        s.startswith("http://")
+                        or s.startswith("https://")
+                        or re.search(r"\bpage\s+\d+\s+of\s+\d+\b", s)
+                        or re.fullmatch(r"\d{1,2}[/-]\d{1,2}[/-]\d{2,4}", s)
+                    ):
+                        pass
+                    elif any(
+                        kw in s
+                        for kw in (
+                            "public information",
+                            "inquiries",
+                            "collections",
+                            "total accounts",
+                            "credit summary",
+                        )
+                    ):
+                        pass
+                    else:
+                        return start_idx, txt, "cross_page_backtrack"
+
+                checked += 1
+                j -= 1
+    except Exception:
+        # Fail-safe: never break core behavior if cross-page probe errs
+        pass
+
     return start_idx, None, "anchor_no_heading"
 
 
@@ -2540,14 +2605,18 @@ def split_accounts(
                     extract_tsv_v2_months_by_bureau,
                 )
                 
+                # Filter tokens_by_line to only account_lines (per-account slicing)
+                account_keys = {(ln["page"], ln["line"]) for ln in account_lines}
+                account_tokens_by_line = {k: v for k, v in tokens_by_line.items() if k in account_keys}
+                
                 months_v2 = extract_tsv_v2_months_by_bureau(
                     session_id=str(session_id),
                     heading=str(headings[idx] or ""),
-                    tokens_by_line=tokens_by_line,
-                    lines=lines,
+                    tokens_by_line=account_tokens_by_line,
+                    lines=account_lines,
                 )
                 
-                if months_v2:
+                if months_v2 is not None:
                     tu_count = len(months_v2.get("transunion", []))
                     xp_count = len(months_v2.get("experian", []))
                     eq_count = len(months_v2.get("equifax", []))
@@ -2572,6 +2641,57 @@ def split_accounts(
             except Exception:
                 logger.exception(
                     "HISTORY_TSV_2Y_V2_FAIL sid=%s idx=%d heading=%s",
+                    str(session_id),
+                    int(idx + 1),
+                    str(headings[idx] if idx < len(headings) else ""),
+                )
+        
+        # TSV v2: Monthly status pairing (status ABOVE month, no translation)
+        try:
+            from backend.config import HISTORY_TSV_2Y_V2_MONTHLY_ENABLED
+        except Exception:
+            HISTORY_TSV_2Y_V2_MONTHLY_ENABLED = False
+        
+        logger.info("TSV_V2_MONTHLY_CHECK: enabled=%s sid=%s idx=%d heading=%s", 
+                   HISTORY_TSV_2Y_V2_MONTHLY_ENABLED, session_id, idx, headings[idx] if idx < len(headings) else "")
+        
+        if HISTORY_TSV_2Y_V2_MONTHLY_ENABLED and session_id and (idx < len(headings)) and headings[idx]:
+            try:
+                from backend.core.logic.report_analysis.tsv_v2_monthly_extractor import (
+                    extract_tsv_v2_monthly,
+                )
+                
+                # Filter tokens_by_line to only account_lines (per-account slicing)
+                account_keys = {(ln["page"], ln["line"]) for ln in account_lines}
+                account_tokens_by_line = {k: v for k, v in tokens_by_line.items() if k in account_keys}
+                
+                monthly_v2 = extract_tsv_v2_monthly(
+                    session_id=str(session_id),
+                    heading=str(headings[idx] or ""),
+                    idx=idx,
+                    tokens_by_line=account_tokens_by_line,
+                    lines=account_lines,
+                    tsv_v2_months=history_out.get("two_year_payment_history_months_tsv_v2"),
+                )
+                
+                if monthly_v2 is not None:
+                    tu_count = len(monthly_v2.get("transunion", []))
+                    xp_count = len(monthly_v2.get("experian", []))
+                    eq_count = len(monthly_v2.get("equifax", []))
+                    
+                    history_out["two_year_payment_history_monthly_tsv_v2"] = monthly_v2
+                    logger.info(
+                        "HISTORY_TSV_V2_MONTHLY_SUCCESS sid=%s idx=%d heading=%s tu=%d xp=%d eq=%d",
+                        str(session_id),
+                        int(idx + 1),
+                        str(headings[idx] or ""),
+                        int(tu_count),
+                        int(xp_count),
+                        int(eq_count),
+                    )
+            except Exception:
+                logger.exception(
+                    "HISTORY_TSV_V2_MONTHLY_FAIL sid=%s idx=%d heading=%s",
                     str(session_id),
                     int(idx + 1),
                     str(headings[idx] if idx < len(headings) else ""),
@@ -4049,7 +4169,7 @@ def main(argv: List[str] | None = None) -> None:
     # Log exact parameters to split_accounts
     _dbg_path("CALL_split_accounts.tsv_path", tsv_path)
     _dbg_path("CALL_split_accounts.json_out", json_out)
-    result = split_accounts(tsv_path, json_out, write_tsv=args.write_tsv)
+    result = split_accounts(tsv_path, json_out, write_tsv=args.write_tsv, session_id=sid)
     if args.print_summary:
         accounts = result.get("accounts") or []
         total = len(accounts)

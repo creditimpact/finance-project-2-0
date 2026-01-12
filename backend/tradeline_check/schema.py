@@ -19,6 +19,5 @@ def bureau_output_template(
         "bureau": bureau,
         "status": "ok",
         "findings": [],
-        "blocked_questions": [],
         "notes": "tradeline_check scaffold v1 (no analysis yet)",
     }

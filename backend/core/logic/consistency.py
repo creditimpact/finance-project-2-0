@@ -477,6 +477,14 @@ def _get_bureau_value(bureaus_json: Mapping[str, Any], field: str, bureau: str) 
         return None
 
     if field == "two_year_payment_history":
+        # Prefer monthly TSV v2 (list of {month,status})
+        new_block = bureaus_json.get("two_year_payment_history_monthly_tsv_v2", {})
+        if isinstance(new_block, Mapping):
+            value = new_block.get(bureau)
+            if value is not None:
+                return value
+
+        # Fallback to legacy list[str]
         block = bureaus_json.get("two_year_payment_history", {})
         if isinstance(block, Mapping):
             value = block.get(bureau)

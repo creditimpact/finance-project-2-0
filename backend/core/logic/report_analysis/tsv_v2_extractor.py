@@ -8,6 +8,7 @@ No status mapping, no 7Y interference; just months by bureau.
 """
 
 import logging
+import re
 from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,30 @@ HEBREW_MONTHS = {
     "ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני",
     "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳",
 }
+
+ENGLISH_MONTHS = {
+    "jan", "feb", "mar", "apr", "may", "jun",
+    "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+}
+
+YEAR_MARKER_RE = re.compile(r"^[""'’](\d{2})$")
+
+
+def _normalize_month_token(token: str) -> str:
+    """Normalize token for English month detection (lowercase, strip punctuation/year suffix)."""
+    normalized = token.strip().lower()
+    normalized = normalized.rstrip(".")
+    normalized = re.sub(r"\s*\(?\s*['’]?\d{2,4}\)?$", "", normalized)
+    return normalized
+
+
+def _is_month_token(text: str) -> bool:
+    normalized = _normalize_month_token(text)
+    if normalized in ENGLISH_MONTHS:
+        return True
+    if YEAR_MARKER_RE.match(text.strip()):
+        return True
+    return text.strip() in HEBREW_MONTHS
 
 
 def extract_tsv_v2_months_by_bureau(
@@ -40,6 +65,13 @@ def extract_tsv_v2_months_by_bureau(
     """
     if not tokens_by_line or not lines:
         return None
+    
+    # Log account page bounds
+    account_pages = [ln.get("page") for ln in lines if "page" in ln]
+    if account_pages:
+        page_min, page_max = min(account_pages), max(account_pages)
+        logger.info("TSV_V2_ACCOUNT_BOUNDS: sid=%s heading=%s page_start=%s page_end=%s",
+                   session_id, heading, page_min, page_max)
     
     # Step 1: Collect all tokens with page, line indices for easy lookup
     # Sort by page, line to maintain reading order
@@ -105,6 +137,20 @@ def extract_tsv_v2_months_by_bureau(
     logger.info("TSV_V2: 2Y region range idx_start=%d idx_end=%d token_count=%d",
                 twoY_start_idx, sevenY_start_idx, len(two_year_tokens))
     
+    # Log first/last 10 tokens of 2Y region with page/line info
+    if two_year_tokens:
+        logger.info("TSV_V2: 2Y first 10 tokens: %s",
+                   [(t.get("_page"), t.get("_line"), t.get("text", "")[:30]) for t in two_year_tokens[:10]])
+        logger.info("TSV_V2: 2Y last 10 tokens: %s",
+                   [(t.get("_page"), t.get("_line"), t.get("text", "")[:30]) for t in two_year_tokens[-10:]])
+        
+        # Check 2Y region page bounds
+        two_year_pages = [t.get("_page") for t in two_year_tokens if "_page" in t]
+        if two_year_pages:
+            page_min_2y, page_max_2y = min(two_year_pages), max(two_year_pages)
+            logger.info("TSV_V2_2Y_BOUNDS: sid=%s heading=%s page_min=%s page_max=%s token_count=%d",
+                       session_id, heading, page_min_2y, page_max_2y, len(two_year_tokens))
+    
     # Step 4: Find bureau markers in 2Y region
     bureau_indices = {}
     bureau_keywords = {
@@ -144,7 +190,7 @@ def extract_tsv_v2_months_by_bureau(
             # EQ: from EQ to end
             slices[bureau] = (idx, len(two_year_tokens))
     
-    # Step 6: Extract Hebrew months from each slice
+    # Step 6: Extract months (English normalized, Hebrew exact) from each slice
     result = {"transunion": [], "experian": [], "equifax": []}
     
     for bureau, (start_idx, end_idx) in slices.items():
@@ -152,18 +198,17 @@ def extract_tsv_v2_months_by_bureau(
         months = []
         
         for tok in slice_tokens:
-            text = tok.get("text", "").strip()
-            if text in HEBREW_MONTHS:
-                months.append(text)
+            text = tok.get("text", "")
+            if YEAR_MARKER_RE.match(text.strip()):
+                # Treat year marker as January of that year
+                months.append("Jan")
+                continue
+            if _is_month_token(text):
+                months.append(text.strip())
         
         result[bureau] = months
         logger.info("TSV_V2: slice '%s' idx_range=(%d, %d) extracted_months=%d samples=%s",
                    bureau, start_idx, end_idx, len(months), months[:3] if months else [])
-    
-    total_months = sum(len(m) for m in result.values())
-    if total_months == 0:
-        logger.warning("TSV_V2: no months extracted sid=%s heading=%s", session_id, heading)
-        return None
     
     logger.info("TSV_V2: extraction complete sid=%s heading=%s tu=%d ex=%d eq=%d",
                session_id, heading, len(result.get("transunion", [])),

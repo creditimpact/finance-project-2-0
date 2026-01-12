@@ -507,6 +507,11 @@ HISTORY_DISABLE_LEGACY_2Y_MONTHLY = env_bool("HISTORY_DISABLE_LEGACY_2Y_MONTHLY"
 # When enabled (default 0), extract Hebrew month abbreviations by bureau from 2Y region
 HISTORY_TSV_2Y_V2_ENABLED = env_bool("HISTORY_TSV_2Y_V2_ENABLED", False)
 
+# TSV v2: Monthly status pairing (status ABOVE month, no translation of month text)
+# When enabled (default 0), pair month tokens with status tokens per bureau
+# Status row must be above month row (status_y < month_y) within tolerance
+HISTORY_TSV_2Y_V2_MONTHLY_ENABLED = env_bool("HISTORY_TSV_2Y_V2_MONTHLY_ENABLED", False)
+
 from .note_style import (
     NOTE_STYLE_ALLOW_TOOL_CALLS,
     NOTE_STYLE_ALLOW_TOOLS,

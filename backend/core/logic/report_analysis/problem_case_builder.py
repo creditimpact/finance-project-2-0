@@ -139,6 +139,61 @@ def _sanitize_bureaus(data: Mapping[str, Any] | None) -> Dict[str, Any]:
     return cleaned
 
 
+_MONTHLY_V2_REMOVED_KEYS = {
+    "derived_month_num",
+    "derived_year",
+    "month_label_normalized",
+    "year_token_raw",
+}
+
+
+def _clone_json_safe(obj: Any) -> Any:
+    """Best-effort deep clone that preserves JSON-serializable structure."""
+
+    try:
+        return json.loads(json.dumps(obj, ensure_ascii=False))
+    except Exception:
+        # Fallback to shallow copy when serialization fails; caller only uses clone for filtering
+        if isinstance(obj, Mapping):
+            return dict(obj)
+        if isinstance(obj, list):
+            return list(obj)
+        return obj
+
+
+def _filter_monthly_v2_for_export(bureaus_payload: Any) -> Any:
+    """Return a copy of bureaus payload with monthly_v2 derived keys stripped.
+
+    This is export-only: the input object is not mutated. Only entries under
+    two_year_payment_history_monthly_tsv_v2 are touched; everything else is
+    preserved verbatim.
+    """
+
+    if not isinstance(bureaus_payload, Mapping):
+        return bureaus_payload
+
+    filtered = _clone_json_safe(bureaus_payload)
+
+    monthly_block = filtered.get("two_year_payment_history_monthly_tsv_v2")
+    if not isinstance(monthly_block, Mapping):
+        return filtered
+
+    for bureau, entries in monthly_block.items():
+        if not isinstance(entries, list):
+            continue
+        cleaned_entries = []
+        for entry in entries:
+            if isinstance(entry, Mapping):
+                cleaned_entries.append(
+                    {k: v for k, v in entry.items() if k not in _MONTHLY_V2_REMOVED_KEYS}
+                )
+            else:
+                cleaned_entries.append(entry)
+        monthly_block[bureau] = cleaned_entries
+
+    return filtered
+
+
 _ORIGCRED_DASH_TOKENS = {"--", "—", "–"}
 _RAW_ORIGCRED_PATTERN = re.compile(
     r"original\s+creditor(?:\s+\d+)?(?:\s*[:：]\s*|\s+)(?P<value>.+?)\s+(?:--|—|–)\s+(?:--|—|–)\s*$",
@@ -257,31 +312,23 @@ def _build_bureaus_payload_from_stagea(
         else:
             ordered[bureau] = value
 
-    two_year = acc.get("two_year_payment_history") or {}
     seven_year = acc.get("seven_year_history") or {}
 
-    ordered["two_year_payment_history"] = two_year
     ordered["seven_year_history"] = seven_year
     
-    # Gate new monthly history fields behind flag
-    if HISTORY_MAIN_WIRING_ENABLED:
-        ordered["two_year_payment_history_monthly"] = acc.get("two_year_payment_history_monthly") or {}
-        ordered["two_year_payment_history_months"] = acc.get("two_year_payment_history_months") or []
-        # Include per-bureau months (TSV-based Phase 1) when present
-        tsv_months_by_bureau = acc.get("two_year_payment_history_months_by_bureau")
-        if isinstance(tsv_months_by_bureau, dict):
-            ordered["two_year_payment_history_months_by_bureau"] = tsv_months_by_bureau
-    
-    # Include TSV v2 months (new clean pipeline) when present - no flag gate, always include if present
-    tsv_v2_months = acc.get("two_year_payment_history_months_tsv_v2")
-    logger.info("CASE_BUILDER_TSV_V2_CHECK tsv_v2_months_type=%s",
-                type(tsv_v2_months).__name__ if tsv_v2_months else "None")
-    if isinstance(tsv_v2_months, dict) and tsv_v2_months:  # Ensure it's a non-empty dict
-        ordered["two_year_payment_history_months_tsv_v2"] = tsv_v2_months
-        logger.info("CASE_BUILDER_TSV_V2_INCLUDED tu=%d xp=%d eq=%d",
-                   len(tsv_v2_months.get("transunion", [])),
-                   len(tsv_v2_months.get("experian", [])),
-                   len(tsv_v2_months.get("equifax", [])))
+    # Prefer TSV v2 monthly status pairs; fallback to legacy for backward compatibility
+    tsv_v2_monthly = acc.get("two_year_payment_history_monthly_tsv_v2")
+    if isinstance(tsv_v2_monthly, dict) and tsv_v2_monthly is not None:
+        ordered["two_year_payment_history_monthly_tsv_v2"] = tsv_v2_monthly
+        logger.info("CASE_BUILDER_TSV_V2_MONTHLY_INCLUDED tu=%d xp=%d eq=%d",
+                   len(tsv_v2_monthly.get("transunion", [])),
+                   len(tsv_v2_monthly.get("experian", [])),
+                   len(tsv_v2_monthly.get("equifax", [])))
+    else:
+        # Fallback to legacy two_year_payment_history when monthly_v2 is absent
+        two_year = acc.get("two_year_payment_history") or {}
+        if two_year:
+            ordered["two_year_payment_history"] = two_year
     
     ordered["order"] = list(ALLOWED_BUREAUS_TOPLEVEL)
 
@@ -494,7 +541,8 @@ def _build_problem_cases_lean(
         if HISTORY_MAIN_WIRING_ENABLED and ("two_year_payment_history_monthly" in bureaus_payload):
             heading = account.get("heading", "unknown")
             logger.info("CASE_BUILDER_HISTORY_MONTHLY_INCLUDED sid=%s account_id=%s heading=%s", sid, idx, heading)
-        _write_json(account_dir / pointers["bureaus"], bureaus_payload)
+        bureaus_payload_filtered = _filter_monthly_v2_for_export(bureaus_payload)
+        _write_json(account_dir / pointers["bureaus"], bureaus_payload_filtered)
 
         flat_fields, _provenance = build_rule_fields_from_triad(dict(account))
         _write_json(account_dir / pointers["flat"], flat_fields)
@@ -899,7 +947,8 @@ def _build_problem_cases_legacy(
         _write_json(account_dir / pointers["raw"], raw_lines)
 
         bureaus_obj = _build_bureaus_payload_from_stagea(full_acc)
-        _write_json(account_dir / pointers["bureaus"], bureaus_obj)
+        bureaus_obj_filtered = _filter_monthly_v2_for_export(bureaus_obj)
+        _write_json(account_dir / pointers["bureaus"], bureaus_obj_filtered)
 
         flat_fields, _prov = build_rule_fields_from_triad(dict(full_acc))
         _write_json(account_dir / pointers["flat"], flat_fields)

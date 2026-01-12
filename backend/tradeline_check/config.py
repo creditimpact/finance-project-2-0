@@ -20,8 +20,6 @@ class TradlineCheckConfig:
     def __init__(self):
         self.enabled = _bool_env_flag("TRADELINE_CHECK_ENABLED", default=False)
         self.write_debug = _bool_env_flag("TRADELINE_CHECK_WRITE_DEBUG", default=False)
-        # Q6 gate behavior flags
-        self.gate_strict = _bool_env_flag("TRADELINE_CHECK_GATE_STRICT", default=False)
         self.write_empty_results = _bool_env_flag(
             "TRADELINE_CHECK_WRITE_EMPTY_RESULTS", default=False
         )

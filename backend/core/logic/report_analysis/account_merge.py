@@ -2846,6 +2846,24 @@ def _build_inline_points_mode_context(payload: Mapping[str, Any]) -> Dict[str, A
                 coerced[str(bureau)] = [item for item in entries]
         return coerced
 
+    def _coerce_history_2y_from_monthly_tsv_v2(raw_map: Mapping[str, Any]) -> Dict[str, List[str]]:
+        coerced: Dict[str, List[str]] = {}
+        for bureau, entries in raw_map.items():
+            if isinstance(entries, Sequence) and not isinstance(entries, (str, bytes)):
+                statuses: List[str] = []
+                for entry in entries:
+                    if isinstance(entry, Mapping):
+                        status = entry.get("status")
+                        if status is None:
+                            statuses.append("--")
+                        else:
+                            status_text = str(status)
+                            statuses.append(status_text if status_text != "" else "--")
+                    else:
+                        statuses.append(str(entry))
+                coerced[str(bureau)] = statuses
+        return coerced
+
     def _coerce_history_7y(raw_map: Mapping[str, Any]) -> Dict[str, Dict[str, int]]:
         coerced: Dict[str, Dict[str, int]] = {}
         for bureau, branch in raw_map.items():
@@ -2862,9 +2880,13 @@ def _build_inline_points_mode_context(payload: Mapping[str, Any]) -> Dict[str, A
     if isinstance(history_2y_payload, Mapping):
         context["history_2y"] = _coerce_history_2y(history_2y_payload)
     else:
-        history_2y_fallback = payload.get("two_year_payment_history")
-        if isinstance(history_2y_fallback, Mapping):
-            context["history_2y"] = _coerce_history_2y(history_2y_fallback)
+        history_2y_monthly = payload.get("two_year_payment_history_monthly_tsv_v2")
+        if isinstance(history_2y_monthly, Mapping):
+            context["history_2y"] = _coerce_history_2y_from_monthly_tsv_v2(history_2y_monthly)
+        else:
+            history_2y_fallback = payload.get("two_year_payment_history")
+            if isinstance(history_2y_fallback, Mapping):
+                context["history_2y"] = _coerce_history_2y(history_2y_fallback)
 
     history_7y_payload = payload.get("history_7y")
     if isinstance(history_7y_payload, Mapping):

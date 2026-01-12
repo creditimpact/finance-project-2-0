@@ -42,7 +42,6 @@ def clear_env(monkeypatch):
     # Ensure deterministic flags for tests
     monkeypatch.setenv("TRADELINE_CHECK_ENABLED", "1")
     monkeypatch.setenv("TRADELINE_CHECK_WRITE_DEBUG", "1")
-    monkeypatch.setenv("TRADELINE_CHECK_GATE_STRICT", "0")
     monkeypatch.setenv("TRADELINE_CHECK_PLACEHOLDER_TOKENS", "--,n/a,unknown")
     monkeypatch.setenv("TRADELINE_CHECK_WRITE_EMPTY_RESULTS", "0")
     yield
@@ -193,8 +192,7 @@ def test_q1_non_blocking_payload(tmp_path: Path):
     )
     run_for_account(acc_ctx)
     data = read_bureau_file(tmp_path, "8", "experian")
-    # payload-level status remains ok; no findings added; gate and coverage present
+    # payload-level status remains ok; no findings added; coverage present
     assert data["status"] == "ok"
     assert data.get("findings", []) == []
-    assert data["gate"]["version"] == "q6_presence_v1"
     assert data["coverage"]["version"] == "coverage_v1"

@@ -1,8 +1,8 @@
 """F2.B01 — Activity vs Monthly History (Payment Performance).
 
 Evaluates whether the bureau's two_year_payment_history_monthly_tsv_v2 contains
-activity evidence (ok or delinquency months) and checks alignment with Q2's
-activity output. Eligible only for R1 state 1 (Q1=open, Q2=ok).
+activity evidence (ok or delinquency months) for open accounts. Eligible only
+for R1 state 1 (Q1=open) in the collapsed Q1-only router.
 
 Non-blocking: never modifies payload-level status, gate, coverage, findings,
 blocked_questions, or root_checks.
@@ -45,7 +45,7 @@ def evaluate_f2_b01(
     """
 
     # ── Eligibility Gating ────────────────────────────────────────────────
-    # Eligible ONLY for R1 state 1 (Q1=open, Q2=ok)
+    # Eligible ONLY for R1 state 1 (Q1=open)
 
     routing = payload.get("routing", {}) if isinstance(payload, Mapping) else {}
     r1 = routing.get("R1", {}) if isinstance(routing, Mapping) else {}
@@ -58,17 +58,12 @@ def evaluate_f2_b01(
 
     eligible = r1_state_num == 1
 
-    # ── Extract Q1 and Q2 inputs ──────────────────────────────────────────
+    # ── Extract Q1 inputs ─────────────────────────────────────────────────
 
     root_checks = payload.get("root_checks", {}) if isinstance(payload, Mapping) else {}
 
     q1_result = root_checks.get("Q1", {}) if isinstance(root_checks, Mapping) else {}
     q1_declared_state = q1_result.get("declared_state") if isinstance(q1_result, Mapping) else None
-
-    q2_result = root_checks.get("Q2", {}) if isinstance(root_checks, Mapping) else {}
-    q2_status = q2_result.get("status") if isinstance(q2_result, Mapping) else None
-    q2_expected_activity = q2_result.get("expected_activity") if isinstance(q2_result, Mapping) else None
-    q2_observed_activity = q2_result.get("observed_activity") if isinstance(q2_result, Mapping) else None
 
     # ── Load monthly history ──────────────────────────────────────────────
 
@@ -136,32 +131,13 @@ def evaluate_f2_b01(
 
     if not eligible:
         status = "skipped"
-        explanation = "F2.B01 skipped: not eligible (R1.state_num must be 1; requires Q1=open and Q2=ok)"
+        explanation = "F2.B01 skipped: not eligible (R1.state_num must be 1; requires Q1=open)"
     elif monthly_entries is None or len(monthly_entries) == 0:
         status = "unknown"
         explanation = "F2.B01 unknown: monthly history missing or empty"
-    elif (
-        q2_status == "ok"
-        and q2_observed_activity is True
-        and metrics["has_only_missing"] is True
-    ):
-        status = "conflict"
-        explanation = (
-            "F2.B01 conflict: Q2 expects activity (ok) and observed it, "
-            "but monthly history is all missing (--)"
-        )
-    elif (
-        q2_status == "skipped_missing_data"
-        and metrics["has_any_activity_in_monthly"] is True
-    ):
-        status = "conflict"
-        explanation = (
-            "F2.B01 conflict: Q2 skipped (no activity expected due to missing data), "
-            "but monthly history shows activity"
-        )
     else:
         status = "ok"
-        explanation = "F2.B01 ok: monthly history aligns with Q2 activity assessment"
+        explanation = "F2.B01 ok: monthly history present for open account"
 
     # ── Extract evidence (first 6 and last 6 months) ───────────────────────
 
@@ -201,9 +177,6 @@ def evaluate_f2_b01(
         "trigger": {
             "r1_state_num": r1_state_num,
             "q1_declared_state": q1_declared_state,
-            "q2_status": q2_status,
-            "q2_expected_activity": q2_expected_activity,
-            "q2_observed_activity": q2_observed_activity,
         },
         "metrics": metrics,
         "evidence": {

@@ -1,8 +1,9 @@
 """F0.A01 — Time Ceiling Integrity (record-level, non-blocking).
 
 Validates that at least one ceiling candidate date (date_reported, last_verified)
-exists and is greater than or equal to every other parseable date on the tradeline.
+exists and is greater than or equal to every other parseable bureau date field.
 
+Statuses: ok | conflict | skipped_missing_data (no unknown).
 This branch is not gated by R1 and runs for every bureau. It is record-level and
 writes under payload["record_integrity"]["F0"]["A01"].
 """
@@ -16,7 +17,7 @@ from backend.core.logic.report_analysis.extractors.tokens import parse_date_any
 
 log = logging.getLogger(__name__)
 
-VERSION = "f0_a01_time_ceiling_integrity_v1"
+VERSION = "f0_a01_time_ceiling_integrity_v2"
 
 
 def _is_missing(value: object, placeholders: set[str]) -> bool:
@@ -61,7 +62,7 @@ def evaluate_f0_a01(
     """Evaluate F0.A01 ceiling integrity for a single bureau.
 
     Validates that at least one ceiling candidate (date_reported, last_verified)
-    exists and is greater than or equal to every other date, including monthly history.
+    exists and is greater than or equal to every other bureau date field.
 
     Returns a record-level result dict to be stored under
     payload["record_integrity"]["F0"]["A01"].
@@ -69,7 +70,7 @@ def evaluate_f0_a01(
 
     result = {
         "version": VERSION,
-        "status": "unknown",
+        "status": "skipped_missing_data",
         "executed": True,
         "ceiling": {
             "effective_ceiling_date": None,
@@ -81,8 +82,8 @@ def evaluate_f0_a01(
     }
 
     if not isinstance(bureau_obj, Mapping):
-        result["status"] = "unknown"
-        result["explanation"] = "F0.A01 unknown: bureau object missing or invalid"
+        result["status"] = "skipped_missing_data"
+        result["explanation"] = "F0.A01 skipped_missing_data: bureau object missing or invalid"
         return result
 
     # Collect ceiling candidate dates
@@ -97,8 +98,8 @@ def evaluate_f0_a01(
             ceiling_sources.append(field)
 
     if not ceiling_dates:
-        result["status"] = "unknown"
-        result["explanation"] = "F0.A01 unknown: no parseable ceiling candidate dates"
+        result["status"] = "skipped_missing_data"
+        result["explanation"] = "F0.A01 skipped_missing_data: no parseable ceiling candidate dates"
         return result
 
     effective_ceiling = max(ceiling_dates)
@@ -115,27 +116,6 @@ def evaluate_f0_a01(
         if dt > effective_ceiling:
             violations.append({"field": field, "date": dt.isoformat()})
 
-    # ── Monthly History Upper Bound Validation (additive evidence) ──
-    # Derive ceiling month for comparison (only the month/year part)
-    ceiling_month_key = f"{effective_ceiling.year:04d}-{effective_ceiling.month:02d}"
-    
-    # Check monthly history if available
-    monthly_data = bureaus_data.get("two_year_payment_history_monthly_tsv_v2")
-    if isinstance(monthly_data, Mapping):
-        monthly_entries = monthly_data.get(bureau)
-        if isinstance(monthly_entries, list):
-            for entry in monthly_entries:
-                if not isinstance(entry, Mapping):
-                    continue
-                entry_key = entry.get("month_year_key")
-                if entry_key and isinstance(entry_key, str):
-                    # Any month after ceiling_month is a violation (status irrelevant)
-                    if entry_key > ceiling_month_key:
-                        violations.append({
-                            "field": f"monthly_history[{entry_key}]",
-                            "date": f"{entry_key}-01"
-                        })
-
     if violations:
         result["status"] = "conflict"
         result["ceiling"]["conflict"] = True
@@ -144,5 +124,5 @@ def evaluate_f0_a01(
         return result
 
     result["status"] = "ok"
-    result["explanation"] = "F0.A01 ok: at least one ceiling date covers all other dates"
+    result["explanation"] = "F0.A01 ok: ceiling covers all bureau date fields"
     return result

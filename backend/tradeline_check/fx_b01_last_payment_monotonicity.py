@@ -97,8 +97,6 @@ def _parse_month_label(month_label: str) -> Optional[Tuple[int, int]]:
                     return (year_num, month_num)
             except ValueError:
                 pass
-    
-    return None
 
 
 def _get_severity(status: str) -> Optional[int]:
@@ -141,7 +139,7 @@ def evaluate_fx_b01(
     dict
         FX.B01 result dict with:
         - version: Check version string
-        - status: "ok", "conflict", "skipped_missing_data", "unknown"
+        - status: "ok", "conflict", "skipped_missing_data"
         - eligible: Always True (ungated)
         - executed: True if check ran successfully
         - fired: True if conflict detected
@@ -154,7 +152,7 @@ def evaluate_fx_b01(
 
     result = {
         "version": VERSION,
-        "status": "unknown",
+        "status": "skipped_missing_data",
         "eligible": True,  # FX branches are always eligible
         "executed": False,
         "fired": False,  # Set to True if conflict detected

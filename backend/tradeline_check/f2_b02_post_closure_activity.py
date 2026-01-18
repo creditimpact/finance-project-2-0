@@ -3,8 +3,12 @@
 Evaluates whether any activity or payment dates occur AFTER the declared closed_date,
 which is logically impossible for a closed account.
 
-Eligible only for R1 states 3 and 4 (Q1=closed, Q2=ok or conflict).
-These states guarantee closed_date exists and is parseable.
+Eligible only for R1 state 2 (Q1=closed) in the Q1-only router.
+
+Returns exactly 3 statuses:
+- ok: closed_date valid, no post-closure activity detected (or activity fields missing/unparseable)
+- conflict: closed_date valid, activity date > closed_date
+- skipped_missing_data: closed_date missing/unparseable (cannot evaluate)
 
 This branch does NOT read monthly history, date_reported, last_verified, or date_convention.
 """
@@ -18,11 +22,11 @@ from backend.core.logic.report_analysis.extractors.tokens import parse_date_any
 
 log = logging.getLogger(__name__)
 
-# Eligible R1 states: Q1=closed AND Q2!=skipped_missing_data (states 3 and 4)
-ELIGIBLE_R1_STATES = {3, 4}
+# Eligible R1 state: Q1=closed (state_num=2)
+ELIGIBLE_R1_STATES = {2}
 
-# Fields to check for post-closure activity
-ACTIVITY_FIELDS = ("last_payment", "date_of_last_activity")
+# Fields to check for post-closure activity (ordered)
+ACTIVITY_FIELDS = ("date_of_last_activity", "last_payment")
 
 
 def _is_missing(value: object, placeholders: set[str]) -> bool:
@@ -78,13 +82,11 @@ def evaluate_f2_b02(
     r1_result = routing.get("R1", {}) if isinstance(routing, Mapping) else {}
     r1_state_num = r1_result.get("state_num") if isinstance(r1_result, Mapping) else None
 
-    # Extract Q1 and Q2 status for trigger evidence
+    # Extract Q1 status for trigger evidence
     root_checks = payload.get("root_checks", {})
     q1_result = root_checks.get("Q1", {}) if isinstance(root_checks, Mapping) else {}
-    q2_result = root_checks.get("Q2", {}) if isinstance(root_checks, Mapping) else {}
     
     q1_declared_state = q1_result.get("declared_state") if isinstance(q1_result, Mapping) else None
-    q2_status = q2_result.get("status") if isinstance(q2_result, Mapping) else None
 
     # Check eligibility based on R1 state
     if r1_state_num not in ELIGIBLE_R1_STATES:
@@ -97,35 +99,50 @@ def evaluate_f2_b02(
             "trigger": {
                 "r1_state_num": r1_state_num,
                 "q1_declared_state": q1_declared_state,
-                "q2_status": q2_status,
             },
-            "explanation": "F2.B02 skipped: not eligible (R1.state_num must be 3 or 4; requires Q1=closed with Q2=ok or conflict)",
+            "explanation": "F2.B02 skipped: not eligible (R1.state_num must be 2; requires Q1=closed)",
         }
 
-    # At this point, closed_date is GUARANTEED to be parseable by routing
-    # No need for internal field checks
+    # Parse closed_date - required for evaluation
     closed_date_raw = bureau_obj.get("closed_date")
-    closed_date = _parse_to_date(closed_date_raw)
-
-    # Defensive check (should never happen given routing guarantees)
-    if closed_date is None:
-        log.warning(
-            "F2_B02_UNEXPECTED_MISSING_CLOSED_DATE r1_state_num=%s closed_date_raw=%r",
-            r1_state_num,
-            closed_date_raw,
-        )
+    
+    # Check if closed_date is missing or placeholder
+    if _is_missing(closed_date_raw, placeholders):
         return {
             "version": "f2_b02_post_closure_activity_v1",
-            "status": "unknown",
+            "status": "skipped_missing_data",
             "eligible": True,
             "executed": True,
             "fired": False,
             "trigger": {
                 "r1_state_num": r1_state_num,
                 "q1_declared_state": q1_declared_state,
-                "q2_status": q2_status,
             },
-            "explanation": "F2.B02 unknown: unable to parse closed_date despite routing eligibility",
+            "evidence": {
+                "closed_date_raw": closed_date_raw,
+                "reason": "closed_date missing or placeholder",
+            },
+            "explanation": "F2.B02 skipped: closed_date is missing or placeholder; cannot evaluate post-closure activity",
+        }
+    
+    # Parse closed_date
+    closed_date = _parse_to_date(closed_date_raw)
+    if closed_date is None:
+        return {
+            "version": "f2_b02_post_closure_activity_v1",
+            "status": "skipped_missing_data",
+            "eligible": True,
+            "executed": True,
+            "fired": False,
+            "trigger": {
+                "r1_state_num": r1_state_num,
+                "q1_declared_state": q1_declared_state,
+            },
+            "evidence": {
+                "closed_date_raw": closed_date_raw,
+                "reason": "closed_date unparseable",
+            },
+            "explanation": "F2.B02 skipped: closed_date is unparseable; cannot evaluate post-closure activity",
         }
 
     # Check each activity field for post-closure violations
@@ -154,7 +171,6 @@ def evaluate_f2_b02(
                 "trigger": {
                     "r1_state_num": r1_state_num,
                     "q1_declared_state": q1_declared_state,
-                    "q2_status": q2_status,
                 },
                 "evidence": {
                     "closed_date_raw": closed_date_raw,
@@ -163,14 +179,22 @@ def evaluate_f2_b02(
                     "violating_date_raw": raw_val,
                     "violating_date_parsed": activity_date.isoformat(),
                 },
-                "explanation": f"F2.B02 conflict: {field} occurs after closed_date",
+                "explanation": f"F2.B02 fired: {field}={activity_date.isoformat()} is after closed_date={closed_date.isoformat()}",
             }
-
-    # No violations found - all activity dates are before or equal to closed_date
-    checked_fields = [
+    
+    # All activity dates were before/equal to closed_date, or missing/unparseable
+    # (or activity fields are missing/unparseable, which we treat as "no activity evidence")
+    checked_fields_present = [
         field for field in ACTIVITY_FIELDS
         if not _is_missing(bureau_obj.get(field), placeholders)
     ]
+    
+    # Count how many present fields were successfully parsed
+    parsed_count = 0
+    for field in checked_fields_present:
+        raw_val = bureau_obj.get(field)
+        if _parse_to_date(raw_val) is not None:
+            parsed_count += 1
     
     return {
         "version": "f2_b02_post_closure_activity_v1",
@@ -181,12 +205,12 @@ def evaluate_f2_b02(
         "trigger": {
             "r1_state_num": r1_state_num,
             "q1_declared_state": q1_declared_state,
-            "q2_status": q2_status,
         },
         "evidence": {
             "closed_date_raw": closed_date_raw,
             "closed_date_parsed": closed_date.isoformat(),
-            "checked_fields": checked_fields,
+            "checked_fields_present": checked_fields_present,
+            "parsed_fields_count": parsed_count,
         },
         "explanation": "F2.B02 ok: no activity or payments detected after closed_date",
     }

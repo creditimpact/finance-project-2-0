@@ -57,8 +57,8 @@ def make_monthly_history(entries: list[tuple[str, str]]) -> list[dict]:
     return [{"month": month, "status": status} for month, status in entries]
 
 
-def test_f2_b01_eligible_open_q2_ok_monthly_has_activity(tmp_path: Path):
-    """Test F2.B01: eligible open + Q2 ok + monthly has ok/late -> status=ok."""
+def test_f2_b01_eligible_open_monthly_has_activity(tmp_path: Path):
+    """Test F2.B01: eligible open + monthly has ok/late -> status=ok."""
     # Monthly history with mix of ok and delinquency
     monthly_data = make_monthly_history([
         ("01/2024", "ok"),
@@ -123,8 +123,8 @@ def test_f2_b01_eligible_open_q2_ok_monthly_has_activity(tmp_path: Path):
     assert metrics["has_only_missing"] is False
 
 
-def test_f2_b01_eligible_open_q2_ok_monthly_all_missing_conflict(tmp_path: Path):
-    """Test F2.B01: eligible open + Q2 ok + monthly all "--" -> status=conflict."""
+def test_f2_b01_eligible_open_monthly_all_missing_conflict(tmp_path: Path):
+    """Test F2.B01: eligible open + monthly all "--" -> status=conflict."""
     # Monthly history all missing
     monthly_data = make_monthly_history([
         ("01/2024", "--"),
@@ -176,11 +176,11 @@ def test_f2_b01_eligible_open_q2_ok_monthly_all_missing_conflict(tmp_path: Path)
     assert f2_b01["metrics"]["has_only_missing"] is True
 
 
-def test_f2_b01_eligible_open_q2_skipped_monthly_has_activity_conflict(tmp_path: Path):
-    """Test F2.B01: open + Q2 skipped + monthly has activity -> status=skipped (not eligible).
+def test_f2_b01_open_monthly_has_activity_conflict(tmp_path: Path):
+    """Test F2.B01: open + monthly has activity -> status=skipped (not eligible).
     
-    After narrowing eligibility to state 1 only (Q1=open, Q2=ok), this scenario should be skipped
-    because Q2=skipped_missing_data (state 2) is no longer eligible.
+    After narrowing eligibility to state 1 only (Q1=open), this scenario should be skipped
+    because state 2 is no longer eligible.
     """
     monthly_data = make_monthly_history([
         ("01/2024", "ok"),
@@ -209,7 +209,7 @@ def test_f2_b01_eligible_open_q2_skipped_monthly_has_activity_conflict(tmp_path:
         ("12/2023", "ok"),
     ])
     
-    # Q2 will be skipped_missing_data because no activity fields
+    # Activity will be missing because no activity fields
     acc_ctx = make_acc_ctx(
         tmp_path,
         account_key="3",
@@ -399,9 +399,8 @@ def test_f2_b01_non_blocking_invariant(tmp_path: Path):
     # - blocked_questions removed from schema
     assert "blocked_questions" not in data
     
-    # - root_checks present (Q1, Q2)
+    # - root_checks present (Q1)
     assert "Q1" in data["root_checks"]
-    assert "Q2" in data["root_checks"]
     
     # - routing not modified
     assert "R1" in data["routing"]

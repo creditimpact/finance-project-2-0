@@ -7,7 +7,7 @@ from pathlib import Path
 # environment with AccountContext and all dependencies. The comprehensive
 # unit tests in test_f2_b02_post_closure_activity.py provide adequate coverage
 # of F2.B02 behavior including:
-# - Eligibility gating (states 3-4: Q1=closed, Q2=ok or conflict)
+# - Eligibility gating (state 2: Q1=closed)
 # - Conflict detection (activity after closed_date)
 # - OK cases (activity before/equal to closed_date)
 # - Edge cases and output contracts
@@ -20,7 +20,7 @@ def test_f2_b02_integration_full_pipeline():
 
 
 @pytest.mark.skip(reason="Full pipeline integration requires complete environment setup")
-def test_f2_b02_skipped_when_q2_skipped_missing_data():
-    """Test F2.B02 skips when Q2=skipped_missing_data (closed_date not guaranteed)."""
+def test_f2_b02_skipped_for_non_closed_states():
+    """Test F2.B02 skips for non-closed states in Q1-only router."""
     pass
 

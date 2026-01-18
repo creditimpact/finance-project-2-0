@@ -492,7 +492,7 @@ if validation.sent and not barriers["merge_ready"]:
 - Condition: `result_files >= expected_packs AND merge_ai_applied == TRUE`
 - Safe: Ensures merge decisions are reflected in runflow before validation starts
 
-### Q2: Is validation strictly gated on merge_ready?
+### Question 2: Is validation strictly gated on merge_ready?
 
 **NO.** Validation can start via multiple paths:
 1. Orchestrator: *Likely* checks merge_ready (needs verification)
@@ -509,7 +509,7 @@ if validation.sent and not barriers["merge_ready"]:
 - No check for whether merge AI has applied results to runflow
 - Barrier opens before merge work is truly complete
 
-### Q4: What causes validation_ai_applied=FALSE despite validation.status=success?
+### Question 4: What causes validation_ai_applied=FALSE despite validation.status=success?
 
 **Late writer overwrite.** Timeline shows:
 - T+17s: validation END event shows `validation_ai_applied=TRUE`

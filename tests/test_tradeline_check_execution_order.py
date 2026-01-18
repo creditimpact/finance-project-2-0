@@ -1,7 +1,7 @@
 """Test to verify correct execution order and F2.B01 output structure.
 
 This test verifies that:
-1. Root checks Q1 and Q2 are present in final output
+1. Root checks Q1 is present in final output
 2. Branch infrastructure (build_branches_block, ensure_branch_results_container)
 3. F2.B01 result is populated and present
 4. Branches visibility lists are updated with F2.B01
@@ -54,8 +54,8 @@ def clear_env(monkeypatch):
     yield
 
 
-def test_execution_order_q1_q2_present(tmp_path: Path):
-    """Test that Q1 and Q2 checks are present in the final output."""
+def test_execution_order_q1_present(tmp_path: Path):
+    """Test that Q1 check is present in the final output."""
     bureaus_payload = {
         "equifax": {
             "account_status": "Open",
@@ -84,11 +84,9 @@ def test_execution_order_q1_q2_present(tmp_path: Path):
 
     root_checks = data.get("root_checks", {})
 
-    # Q1 and Q2 must be present and have a status field
+    # Q1 must be present and have a status field
     assert "Q1" in root_checks, "Q1 missing"
-    assert "Q2" in root_checks, "Q2 missing"
-    for q in ("Q1", "Q2"):
-        assert "status" in root_checks[q], f"{q} missing status field"
+    assert "status" in root_checks["Q1"], "Q1 missing status field"
 
 
 def test_branch_infrastructure_before_branch_execution(tmp_path: Path):
@@ -169,7 +167,7 @@ def test_f2_b01_present(tmp_path: Path):
 
     # Root checks present
     root_checks = data.get("root_checks", {})
-    assert "Q1" in root_checks and "Q2" in root_checks
+    assert "Q1" in root_checks
 
 
 def test_branches_visibility_updated_with_f2_b01(tmp_path: Path):
@@ -258,7 +256,7 @@ def test_non_blocking_invariant_status_unchanged(tmp_path: Path):
 
 
 def test_root_checks_routing_branches_and_f2_b01(tmp_path: Path):
-    """Test the structure with Q1/Q2, routing, branches, and F2.B01."""
+    """Test the structure with Q1, routing, branches, and F2.B01."""
     bureaus_payload = {
         "equifax": {
             "account_status": "Open",
@@ -285,10 +283,9 @@ def test_root_checks_routing_branches_and_f2_b01(tmp_path: Path):
     run_for_account(acc_ctx)
     data = read_bureau_file(tmp_path, "6", "equifax")
 
-    # Root checks present (Q1/Q2)
+    # Root checks present (Q1)
     root_checks = data.get("root_checks", {})
-    for q in ("Q1", "Q2"):
-        assert q in root_checks, f"{q} missing"
+    assert "Q1" in root_checks, "Q1 missing"
 
     # Routing present
     routing = data.get("routing", {})
@@ -307,6 +304,5 @@ def test_root_checks_routing_branches_and_f2_b01(tmp_path: Path):
     # Date convention attached
     assert "date_convention" in data, "date_convention missing"
 
-    # Final verification: Q1/Q2 have status
+    # Final verification: Q1 has status
     assert root_checks["Q1"].get("status") is not None, "Q1 has no status"
-    assert root_checks["Q2"].get("status") is not None, "Q2 has no status"

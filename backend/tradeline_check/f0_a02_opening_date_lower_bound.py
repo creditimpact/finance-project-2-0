@@ -1,9 +1,9 @@
 """F0.A02 — Opening Date Lower Bound Integrity (record-level, non-blocking).
 
-Validates that the date_opened field serves as a hard lower bound for all event dates
-on the tradeline. No date field may be earlier than date_opened, and no monthly entry
-may show non-missing status before the opening month.
+Validates that the date_opened field serves as a hard lower bound for all other
+bureau date fields on the tradeline. No date field may be earlier than date_opened.
 
+Statuses: ok | conflict | skipped_missing_data (no unknown).
 This branch is not gated by R1 and runs for every bureau. It is record-level and
 writes under payload["record_integrity"]["F0"]["A02"].
 """
@@ -17,7 +17,7 @@ from backend.core.logic.report_analysis.extractors.tokens import parse_date_any
 
 log = logging.getLogger(__name__)
 
-VERSION = "f0_a02_opening_date_lower_bound_v1"
+VERSION = "f0_a02_opening_date_lower_bound_v2"
 
 
 def _is_missing(value: object, placeholders: set[str]) -> bool:
@@ -61,8 +61,7 @@ def evaluate_f0_a02(
 ) -> dict:
     """Evaluate F0.A02 opening date lower bound integrity for a single bureau.
 
-    date_opened is a hard floor: no other date or monthly entry may be earlier.
-    Monthly entries before opening_month are allowed only if status == "--".
+    date_opened is a hard floor: no other bureau date field may be earlier.
 
     Returns a record-level result dict to be stored under
     payload["record_integrity"]["F0"]["A02"].
@@ -70,11 +69,10 @@ def evaluate_f0_a02(
 
     result = {
         "version": VERSION,
-        "status": "unknown",
+        "status": "skipped_missing_data",
         "executed": True,
         "floor": {
             "date_opened": None,
-            "date_opened_month": None,
             "conflict": False,
             "violations": [],
         },
@@ -82,22 +80,18 @@ def evaluate_f0_a02(
     }
 
     if not isinstance(bureau_obj, Mapping):
-        result["status"] = "unknown"
-        result["explanation"] = "F0.A02 unknown: bureau object missing or invalid"
+        result["status"] = "skipped_missing_data"
+        result["explanation"] = "F0.A02 skipped_missing_data: bureau object missing or invalid"
         return result
 
     # Parse date_opened (required anchor)
     date_opened = _to_date(bureau_obj.get("date_opened"), "date_opened", placeholders)
     if date_opened is None:
-        result["status"] = "unknown"
-        result["explanation"] = "F0.A02 unknown: date_opened missing or unparseable"
+        result["status"] = "skipped_missing_data"
+        result["explanation"] = "F0.A02 skipped_missing_data: date_opened missing or unparseable"
         return result
 
     result["floor"]["date_opened"] = date_opened.isoformat()
-    
-    # Derive opening month for monthly history comparison
-    opened_month_key = f"{date_opened.year:04d}-{date_opened.month:02d}"
-    result["floor"]["date_opened_month"] = opened_month_key
 
     # ── Check Bureau Object Fields ──
     violations = []
@@ -111,32 +105,6 @@ def evaluate_f0_a02(
         if dt < date_opened:
             violations.append({"field": field, "date": dt.isoformat()})
 
-    # ── Monthly History Lower Bound Validation (additive evidence) ──
-    # Check monthly history if available
-    monthly_data = bureaus_data.get("two_year_payment_history_monthly_tsv_v2")
-    if isinstance(monthly_data, Mapping):
-        monthly_entries = monthly_data.get(bureau)
-        if isinstance(monthly_entries, list):
-            for entry in monthly_entries:
-                if not isinstance(entry, Mapping):
-                    continue
-                entry_key = entry.get("month_year_key")
-                if not entry_key or not isinstance(entry_key, str):
-                    continue
-                
-                # Check if month is before opening month
-                if entry_key < opened_month_key:
-                    # Month precedes opening - only allowed if status is "--"
-                    status = entry.get("status", "")
-                    if status != "--":
-                        # Non-missing status before opening is a violation
-                        violations.append({
-                            "field": f"monthly_history[{entry_key}]",
-                            "date": f"{entry_key}-01"
-                        })
-                # If entry_key == opened_month_key, allowed (opening month included)
-                # If entry_key > opened_month_key, allowed (after opening)
-
     if violations:
         result["status"] = "conflict"
         result["floor"]["conflict"] = True
@@ -145,5 +113,5 @@ def evaluate_f0_a02(
         return result
 
     result["status"] = "ok"
-    result["explanation"] = "F0.A02 ok: all dates are >= date_opened"
+    result["explanation"] = "F0.A02 ok: all bureau date fields >= date_opened"
     return result
